@@ -73,7 +73,7 @@ atlas-mvn clean package -DskipTests
 
 ```
 src/main/
-├── java/com/mycompany/confluence/aigeneration/
+├── java/com/koreacb/confluence/aigeneration/
 │   ├── ao/                 # Active Objects 엔티티 (8개)
 │   ├── condition/          # Web-item 표시 조건 (2개)
 │   ├── job/                # 스케줄링 작업 러너 (3개)
@@ -142,4 +142,4 @@ src/main/
 
 ## 라이선스
 
-Proprietary - MyCompany Internal Use Only
+Proprietary - KoreaCB Internal Use Only

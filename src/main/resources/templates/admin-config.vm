@@ -2,7 +2,7 @@
 <head>
     <title>AI 문서 생성 - 설정</title>
     <meta name="decorator" content="atl.admin" />
-    $webResourceManager.requireResource("com.mycompany.confluence.ai-page-generation:ai-generation-admin-resources")
+    $webResourceManager.requireResource("com.koreacb.confluence.ai-page-generation:ai-generation-admin-resources")
 </head>
 <body>
 <div id="ai-gen-admin-container" class="ai-gen-admin">

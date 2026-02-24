@@ -1,4 +1,4 @@
-<atlassian-plugin key="com.mycompany.confluence.ai-page-generation"
+<atlassian-plugin key="com.koreacb.confluence.ai-page-generation"
                   name="Expert Document Page AI Generation"
                   plugins-version="2">
 
@@ -6,7 +6,7 @@
         <description>AI-powered expert document page generation for Confluence Server.
             Generates professional documents with templates, quality checks, and section-by-section AI generation.</description>
         <version>1.0.0</version>
-        <vendor name="MyCompany" url="https://mycompany.com"/>
+        <vendor name="KoreaCB" url="https://koreacb.com"/>
         <param name="plugin-icon">images/plugin-icon.svg</param>
         <param name="plugin-logo">images/plugin-icon.svg</param>
         <param name="configure.url">/plugins/servlet/ai-generation/admin/config</param>
@@ -23,14 +23,14 @@
     <!-- ======================== -->
     <ao key="ao-module">
         <description>Active Objects module for AI Generation data persistence</description>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoGenerationJob</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoGenerationSection</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoAuditLog</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoUsageRecord</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoPromptTemplate</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoGlossaryTerm</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoForbiddenWord</entity>
-        <entity>com.mycompany.confluence.aigeneration.ao.AoSpacePolicy</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoGenerationJob</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoGenerationSection</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoAuditLog</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoUsageRecord</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoPromptTemplate</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoGlossaryTerm</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoForbiddenWord</entity>
+        <entity>com.koreacb.confluence.aigeneration.ao.AoSpacePolicy</entity>
     </ao>
 
     <!-- ====================================================== -->
@@ -43,7 +43,7 @@
     <!-- ======================== -->
     <rest key="ai-generation-rest" path="/ai-generation" version="1.0">
         <description>AI Generation REST API</description>
-        <package>com.mycompany.confluence.aigeneration.rest</package>
+        <package>com.koreacb.confluence.aigeneration.rest</package>
     </rest>
 
     <!-- ======================== -->
@@ -57,10 +57,10 @@
         <label key="ai.generation.menu.label"/>
         <link linkId="ai-generation-trigger">/plugins/servlet/ai-generation/wizard?spaceKey=$helper.spaceKey</link>
         <icon height="16" width="16">
-            <link>/download/resources/com.mycompany.confluence.ai-page-generation:ai-generation-wizard-resources/images/wizard-icon.svg</link>
+            <link>/download/resources/com.koreacb.confluence.ai-page-generation:ai-generation-wizard-resources/images/wizard-icon.svg</link>
         </icon>
-        <condition class="com.mycompany.confluence.aigeneration.condition.AiGenerationEnabledCondition"/>
-        <condition class="com.mycompany.confluence.aigeneration.condition.AiGenerationSpaceCondition"/>
+        <condition class="com.koreacb.confluence.aigeneration.condition.AiGenerationEnabledCondition"/>
+        <condition class="com.koreacb.confluence.aigeneration.condition.AiGenerationSpaceCondition"/>
     </web-item>
 
     <!-- Create dialog content menu entry -->
@@ -69,7 +69,7 @@
         <description key="ai.generation.create.menu.description"/>
         <label key="ai.generation.create.menu.label"/>
         <link linkId="ai-generation-create-trigger">#</link>
-        <condition class="com.mycompany.confluence.aigeneration.condition.AiGenerationEnabledCondition"/>
+        <condition class="com.koreacb.confluence.aigeneration.condition.AiGenerationEnabledCondition"/>
     </web-item>
 
     <!-- Admin configuration menu entry -->
@@ -147,7 +147,7 @@
     <!-- SERVLETS                 -->
     <!-- ======================== -->
     <servlet key="ai-generation-admin-servlet" name="AI Generation Admin Servlet"
-             class="com.mycompany.confluence.aigeneration.servlet.AdminConfigServlet">
+             class="com.koreacb.confluence.aigeneration.servlet.AdminConfigServlet">
         <description>Admin configuration servlet for AI Generation</description>
         <url-pattern>/ai-generation/admin/*</url-pattern>
     </servlet>

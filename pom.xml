@@ -4,17 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.mycompany.confluence</groupId>
+    <groupId>com.koreacb.confluence</groupId>
     <artifactId>ai-page-generation</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>atlassian-plugin</packaging>
 
     <name>Expert Document Page AI Generation</name>
     <description>AI-powered expert document page generation plugin for Confluence Server</description>
 
     <organization>
-        <name>MyCompany</name>
-        <url>https://mycompany.com</url>
+        <name>KoreaCB</name>
+        <url>https://koreacb.com</url>
     </organization>
 
     <properties>
@@ -231,7 +231,7 @@
                     <instructions>
                         <Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
                         <Export-Package>
-                            com.mycompany.confluence.aigeneration.api,
+                            com.koreacb.confluence.aigeneration.api,
                         </Export-Package>
                         <Import-Package>
                             com.atlassian.confluence.*;resolution:=optional,
