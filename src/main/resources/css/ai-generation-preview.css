@@ -86,12 +86,46 @@
     border-top: 1px solid #DFE1E6;
 }
 
+/* Metadata definition list - Flexbox fallback for older browsers */
 .ai-gen-metadata-panel dl {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4px 12px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
     margin: 0;
     font-size: 12px;
+}
+
+.ai-gen-metadata-panel dt {
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 auto;
+    flex: 0 0 auto;
+    width: 100px;
+    padding-right: 12px;
+    margin-bottom: 4px;
+}
+
+.ai-gen-metadata-panel dd {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 0px;
+    flex: 1 1 0;
+    min-width: 0;
+    margin-bottom: 4px;
+}
+
+@supports (display: grid) {
+    .ai-gen-metadata-panel dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+    }
+    .ai-gen-metadata-panel dt,
+    .ai-gen-metadata-panel dd {
+        width: auto;
+        padding-right: 0;
+        margin-bottom: 0;
+    }
 }
 
 .ai-gen-metadata-panel dt {

@@ -20,7 +20,7 @@ public class ActiveObjectsUsageTrackingService implements UsageTrackingService {
     public ActiveObjectsUsageTrackingService(ActiveObjects ao) { this.ao = ao; }
 
     @Override
-    public void recordUsage(String userKey, String spaceKey, int tokenCount) {
+    public synchronized void recordUsage(String userKey, String spaceKey, int tokenCount) {
         try {
             Date today = today();
             AoUsageRecord[] rs = ao.find(AoUsageRecord.class,

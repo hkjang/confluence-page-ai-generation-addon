@@ -71,6 +71,10 @@ public class DefaultContextBuilderService implements ContextBuilderService {
     public Map<Long, String> extractPageContent(List<Long> pageIds, String userKey) {
         Map<Long, String> r = new LinkedHashMap<>();
         ConfluenceUser user = resolveUser(userKey);
+        if (user == null) {
+            LOG.warn("Cannot extract page content: user not found for key {}", userKey);
+            return r;
+        }
         for (Long pid : pageIds) {
             try {
                 Page page = pageManager.getPage(pid);
@@ -86,6 +90,10 @@ public class DefaultContextBuilderService implements ContextBuilderService {
     public Map<Long, String> extractAttachmentText(List<Long> attachmentIds, String userKey) {
         Map<Long, String> r = new LinkedHashMap<>();
         ConfluenceUser user = resolveUser(userKey);
+        if (user == null) {
+            LOG.warn("Cannot extract attachment text: user not found for key {}", userKey);
+            return r;
+        }
         for (Long aid : attachmentIds) {
             try {
                 Attachment att = attachmentManager.getAttachment(aid);

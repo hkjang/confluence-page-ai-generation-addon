@@ -13,6 +13,7 @@ import java.util.*;
 
 @Named("templateRegistryService")
 public class DefaultTemplateRegistryService implements TemplateRegistryService {
+    private static final Gson GSON = new Gson();
     private final PolicyService policyService;
     private final List<DocumentTemplate> builtIn;
 
@@ -38,7 +39,7 @@ public class DefaultTemplateRegistryService implements TemplateRegistryService {
         AoSpacePolicy p = policyService.getSpacePolicy(spaceKey);
         if (p == null || p.getAllowedTemplates() == null || p.getAllowedTemplates().isEmpty()) return all;
         try {
-            String[] keys = new Gson().fromJson(p.getAllowedTemplates(), String[].class);
+            String[] keys = GSON.fromJson(p.getAllowedTemplates(), String[].class);
             if (keys == null || keys.length == 0) return all;
             Set<String> allowed = new HashSet<>(Arrays.asList(keys));
             List<DocumentTemplate> filtered = new ArrayList<>();

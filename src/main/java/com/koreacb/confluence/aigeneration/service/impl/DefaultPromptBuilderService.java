@@ -15,12 +15,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 @Named("promptBuilderService")
 public class DefaultPromptBuilderService implements PromptBuilderService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPromptBuilderService.class);
     private static final int MAX_CTX = 32000;
+    private static final ConcurrentHashMap<String, Pattern> PATTERN_CACHE = new ConcurrentHashMap<>();
 
     private final ActiveObjects ao;
     private final TemplateRegistryService templateRegistryService;
@@ -90,8 +92,12 @@ public class DefaultPromptBuilderService implements PromptBuilderService {
     private String applyFW(String c, AoForbiddenWord w) {
         try {
             String rep = w.getReplacement() != null ? w.getReplacement() : "";
-            return w.isRegex() ? Pattern.compile(w.getPattern(), Pattern.CASE_INSENSITIVE).matcher(c).replaceAll(rep)
-                    : c.replace(w.getPattern(), rep);
+            if (w.isRegex()) {
+                Pattern p = PATTERN_CACHE.computeIfAbsent(w.getPattern(),
+                        k -> Pattern.compile(k, Pattern.CASE_INSENSITIVE));
+                return p.matcher(c).replaceAll(rep);
+            }
+            return c.replace(w.getPattern(), rep);
         } catch (Exception e) { LOG.warn("Bad forbidden pattern: {}", w.getPattern()); return c; }
     }
 

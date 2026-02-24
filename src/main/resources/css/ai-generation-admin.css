@@ -92,12 +92,33 @@
     color: #6B778C;
 }
 
-/* Usage Summary Cards */
+/* Usage Summary Cards - Flexbox fallback for older browsers */
 .ai-gen-usage-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin: 16px 0;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin: 16px -8px;
+}
+
+.ai-gen-usage-summary > .ai-gen-usage-card {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 180px;
+    flex: 1 1 180px;
+    margin: 8px;
+}
+
+@supports (display: grid) {
+    .ai-gen-usage-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin: 16px 0;
+    }
+    .ai-gen-usage-summary > .ai-gen-usage-card {
+        margin: 0;
+    }
 }
 
 .ai-gen-usage-card {
@@ -208,8 +229,9 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .ai-gen-usage-summary {
-        grid-template-columns: repeat(2, 1fr);
+    .ai-gen-usage-summary > .ai-gen-usage-card {
+        -ms-flex: 1 1 calc(50% - 16px);
+        flex: 1 1 calc(50% - 16px);
     }
 
     .ai-gen-audit-filters {

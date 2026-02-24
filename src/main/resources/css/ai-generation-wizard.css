@@ -33,12 +33,37 @@
     margin-bottom: 20px;
 }
 
-/* Template Grid */
+/* Template Grid - Flexbox fallback for older browsers */
 .ai-gen-template-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
     margin-top: 16px;
+    margin-left: -8px;
+    margin-right: -8px;
+}
+
+.ai-gen-template-grid > .ai-gen-template-card {
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 calc(50% - 16px);
+    flex: 0 0 calc(50% - 16px);
+    margin: 8px;
+}
+
+@supports (display: grid) {
+    .ai-gen-template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .ai-gen-template-grid > .ai-gen-template-card {
+        flex: none;
+        margin: 0;
+    }
 }
 
 .ai-gen-template-card {

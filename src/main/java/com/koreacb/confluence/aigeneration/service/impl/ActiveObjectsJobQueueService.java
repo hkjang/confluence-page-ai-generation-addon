@@ -33,7 +33,15 @@ public class ActiveObjectsJobQueueService implements JobQueueService {
                 Query.select().where("STATUS = ?", JobStatus.QUEUED.name()).order("CREATED_AT ASC").limit(1));
         if (qs.length == 0) return null;
         AoGenerationJob j = qs[0];
-        if (!JobStatus.QUEUED.name().equals(j.getStatus())) return null;
+        // Re-read to verify status hasn't changed (optimistic concurrency check for cluster)
+        ao.flushAll();
+        AoGenerationJob[] verify = ao.find(AoGenerationJob.class,
+                Query.select().where("JOB_UUID = ? AND STATUS = ?", j.getJobUuid(), JobStatus.QUEUED.name()));
+        if (verify.length == 0) {
+            LOG.debug("Job {} already claimed by another node", j.getJobUuid());
+            return null;
+        }
+        j = verify[0];
         j.setStatus(JobStatus.IN_PROGRESS.name());
         j.setProcessingNodeId(nodeId); j.setStartedAt(new Date()); j.save();
         LOG.info("Claimed job {} on {}", j.getJobUuid(), nodeId);

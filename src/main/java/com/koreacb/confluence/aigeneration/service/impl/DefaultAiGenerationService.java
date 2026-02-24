@@ -44,12 +44,17 @@ public class DefaultAiGenerationService implements AiGenerationService {
         DocumentTemplate tmpl = templateService.getTemplate(req.getTemplateKey());
         if (tmpl == null) throw new IllegalArgumentException("Template not found: " + req.getTemplateKey());
         ConfluenceUser user = permChecker.getUser(userKey);
+        if (user == null) throw new SecurityException("User not found: " + userKey);
         if (!permChecker.canUserGenerate(user, req.getSpaceKey()))
             throw new SecurityException("No permission for space: " + req.getSpaceKey());
         if (!policyService.checkUserAllowed(userKey, req.getSpaceKey()))
             throw new SecurityException("Not allowed by space policy");
         if (!policyService.checkRateLimit(userKey, req.getSpaceKey()))
             throw new IllegalStateException("Rate limit exceeded");
+        if (!rateLimiter.checkDailyLimit(userKey, req.getSpaceKey()))
+            throw new IllegalStateException("Daily request limit exceeded");
+        if (!rateLimiter.tryAcquireUserSlot(userKey))
+            throw new IllegalStateException("Too many concurrent requests for user");
 
         String jobUuid = UUID.randomUUID().toString();
         AoGenerationJob job = ao.create(AoGenerationJob.class);
