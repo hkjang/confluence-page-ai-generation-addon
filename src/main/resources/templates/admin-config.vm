@@ -1,0 +1,155 @@
+<html>
+<head>
+    <title>AI 문서 생성 - 설정</title>
+    <meta name="decorator" content="atl.admin" />
+    $webResourceManager.requireResource("com.mycompany.confluence.ai-page-generation:ai-generation-admin-resources")
+</head>
+<body>
+<div id="ai-gen-admin-container" class="ai-gen-admin">
+    <!-- Navigation Tabs -->
+    <div class="aui-tabs horizontal-tabs">
+        <ul class="tabs-menu">
+            <li class="menu-item active-tab">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config" class="ai-gen-admin-tab active" data-tab="config">
+                    설정
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts" class="ai-gen-admin-tab" data-tab="prompts">
+                    프롬프트
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies" class="ai-gen-admin-tab" data-tab="policies">
+                    정책
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit" class="ai-gen-admin-tab" data-tab="audit">
+                    감사 로그
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Config Panel -->
+    <div id="ai-gen-panel-config" class="ai-gen-admin-panel">
+        <h2>vLLM 연결 설정</h2>
+        <form class="aui" id="ai-gen-config-form">
+            <fieldset>
+                <legend><span>vLLM 서버 연결</span></legend>
+                <div class="field-group">
+                    <label for="ai-gen-vllm-endpoint">vLLM 엔드포인트 URL<span class="aui-icon icon-required"></span></label>
+                    <input type="text" id="ai-gen-vllm-endpoint" class="text long-field"
+                           placeholder="http://localhost:8000"/>
+                    <div class="description">vLLM 서버의 OpenAI Compatible API 엔드포인트 URL</div>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-model">모델명<span class="aui-icon icon-required"></span></label>
+                    <input type="text" id="ai-gen-model" class="text medium-field"
+                           placeholder="meta-llama/Llama-2-7b-chat-hf"/>
+                    <div class="description">vLLM에 배포된 모델의 이름</div>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-api-key">API 키</label>
+                    <input type="password" id="ai-gen-api-key" class="text medium-field" placeholder="(변경 시에만 입력)"/>
+                    <button type="button" id="ai-gen-save-apikey" class="aui-button">키 저장</button>
+                    <span id="ai-gen-api-key-status" class="aui-lozenge"></span>
+                    <div class="description">vLLM 서버 인증용 API 키 (선택사항, AES-256으로 암호화 저장)</div>
+                </div>
+                <div class="field-group">
+                    <button type="button" id="ai-gen-test-connection" class="aui-button">연결 테스트</button>
+                    <div id="ai-gen-test-result"></div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend><span>생성 설정</span></legend>
+                <div class="field-group">
+                    <label for="ai-gen-max-tokens">최대 토큰 수</label>
+                    <input type="number" id="ai-gen-max-tokens" class="text short-field" value="4096"/>
+                    <div class="description">섹션당 최대 생성 토큰 수</div>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-temperature">Temperature</label>
+                    <input type="number" id="ai-gen-temperature" class="text short-field" value="0.7" step="0.1" min="0" max="2"/>
+                    <div class="description">생성 다양성 (0.0=결정적, 1.0=창의적)</div>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-timeout">타임아웃 (초)</label>
+                    <input type="number" id="ai-gen-timeout" class="text short-field" value="60"/>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-max-concurrent">최대 동시 요청 수</label>
+                    <input type="number" id="ai-gen-max-concurrent" class="text short-field" value="5"/>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend><span>제한 및 정책</span></legend>
+                <div class="field-group">
+                    <label for="ai-gen-storage-policy">저장 정책</label>
+                    <select id="ai-gen-storage-policy" class="select">
+                        <option value="NO_STORE">미저장 (기본)</option>
+                        <option value="STORE_30">30일 보관</option>
+                        <option value="STORE_90">90일 보관</option>
+                        <option value="STORE_FOREVER">영구 보관</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-retention-days">감사 로그 보관일</label>
+                    <input type="number" id="ai-gen-retention-days" class="text short-field" value="30"/>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-max-user-day">사용자당 일일 최대 요청</label>
+                    <input type="number" id="ai-gen-max-user-day" class="text short-field" value="50"/>
+                </div>
+                <div class="field-group">
+                    <label for="ai-gen-max-space-day">스페이스당 일일 최대 요청</label>
+                    <input type="number" id="ai-gen-max-space-day" class="text short-field" value="200"/>
+                </div>
+            </fieldset>
+
+            <div class="buttons-container">
+                <div class="buttons">
+                    <button type="button" id="ai-gen-save-config" class="aui-button aui-button-primary">설정 저장</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Glossary Management -->
+        <h2>용어집 관리</h2>
+        <p class="description">AI가 문서 생성 시 참조할 조직 용어를 관리합니다.</p>
+        <table id="ai-gen-glossary-table" class="aui">
+            <thead>
+                <tr><th>용어</th><th>정의</th><th>스페이스</th><th>작업</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="ai-gen-add-form">
+            <input type="text" id="ai-gen-new-term" class="text" placeholder="용어"/>
+            <input type="text" id="ai-gen-new-definition" class="text long-field" placeholder="정의"/>
+            <input type="text" id="ai-gen-new-term-space" class="text short-field" placeholder="스페이스 키 (전역은 비움)"/>
+            <button type="button" id="ai-gen-add-glossary" class="aui-button">추가</button>
+        </div>
+
+        <!-- Forbidden Words -->
+        <h2>금칙어 관리</h2>
+        <p class="description">AI 생성 콘텐츠에서 자동으로 제거하거나 대체할 단어/패턴을 관리합니다.</p>
+        <table id="ai-gen-forbidden-table" class="aui">
+            <thead>
+                <tr><th>패턴</th><th>대체어</th><th>유형</th><th>스페이스</th><th>작업</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="ai-gen-add-form">
+            <input type="text" id="ai-gen-new-pattern" class="text" placeholder="패턴"/>
+            <input type="text" id="ai-gen-new-replacement" class="text" placeholder="대체어 (비우면 삭제)"/>
+            <label><input type="checkbox" id="ai-gen-new-isregex"/> 정규식</label>
+            <input type="text" id="ai-gen-new-word-space" class="text short-field" placeholder="스페이스 키"/>
+            <button type="button" id="ai-gen-add-forbidden" class="aui-button">추가</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

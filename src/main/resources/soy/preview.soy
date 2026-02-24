@@ -1,0 +1,175 @@
+{namespace AiGeneration.Preview}
+
+/**
+ * Preview dialog for generated content
+ * @param jobId
+ * @param templateName
+ */
+{template .dialog}
+<section id="ai-generation-preview-dialog" class="aui-dialog2 aui-dialog2-xlarge aui-layer"
+         role="dialog" aria-hidden="true" data-aui-remove-on-hide="true">
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">{getText('ai.generation.preview.title')}</h2>
+        <div class="aui-dialog2-header-secondary">
+            <span class="aui-lozenge aui-lozenge-success" id="ai-gen-preview-status"></span>
+        </div>
+        <a class="aui-dialog2-header-close">
+            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">{getText('ai.generation.preview.close')}</span>
+        </a>
+    </header>
+    <div class="aui-dialog2-content">
+        <div class="ai-gen-preview-container">
+            <!-- Left: Sections navigation -->
+            <div class="ai-gen-preview-nav">
+                <h4>{getText('ai.generation.preview.sections')}</h4>
+                <ul id="ai-gen-preview-section-nav" class="ai-gen-section-nav"></ul>
+
+                <!-- Quality panel -->
+                <div id="ai-gen-quality-panel" class="ai-gen-quality-panel" style="display:none;">
+                    <h4>{getText('ai.generation.preview.quality')}</h4>
+                    <div id="ai-gen-quality-warnings"></div>
+                </div>
+
+                <!-- Metadata -->
+                <div class="ai-gen-metadata-panel">
+                    <h4>{getText('ai.generation.preview.metadata')}</h4>
+                    <dl>
+                        <dt>{getText('ai.generation.preview.tokens')}</dt>
+                        <dd id="ai-gen-preview-tokens">-</dd>
+                        <dt>{getText('ai.generation.preview.duration')}</dt>
+                        <dd id="ai-gen-preview-duration">-</dd>
+                        <dt>{getText('ai.generation.preview.template')}</dt>
+                        <dd id="ai-gen-preview-template">{$templateName}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Right: Content area -->
+            <div class="ai-gen-preview-content">
+                <div id="ai-gen-preview-sections"></div>
+            </div>
+        </div>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button id="ai-gen-preview-save" class="aui-button aui-button-primary">
+                {getText('ai.generation.preview.save.new')}
+            </button>
+            <button id="ai-gen-preview-insert" class="aui-button">
+                {getText('ai.generation.preview.insert')}
+            </button>
+            <button id="ai-gen-preview-close" class="aui-button aui-button-link">
+                {getText('ai.generation.preview.close')}
+            </button>
+        </div>
+        <div class="aui-dialog2-footer-hint">
+            <span id="ai-gen-preview-job-id" data-job-id="{$jobId}">Job: {$jobId}</span>
+        </div>
+    </footer>
+</section>
+{/template}
+
+/**
+ * Individual section preview block
+ * @param key
+ * @param title
+ * @param content
+ * @param status
+ * @param index
+ */
+{template .sectionBlock}
+<div class="ai-gen-section-block" data-section-key="{$key}" data-section-index="{$index}">
+    <div class="ai-gen-section-header">
+        <h3>{$title}</h3>
+        <div class="ai-gen-section-actions">
+            {if $status == 'FAILED' or $status == 'FALLBACK'}
+                <span class="aui-lozenge aui-lozenge-error">{$status}</span>
+            {else}
+                <span class="aui-lozenge aui-lozenge-success">{$status}</span>
+            {/if}
+            <button class="aui-button aui-button-subtle ai-gen-edit-section" data-section-key="{$key}"
+                    title="{getText('ai.generation.preview.edit')}">
+                <span class="aui-icon aui-icon-small aui-iconfont-edit"></span>
+            </button>
+            <button class="aui-button aui-button-subtle ai-gen-regenerate-section" data-section-key="{$key}"
+                    title="{getText('ai.generation.preview.regenerate')}">
+                <span class="aui-icon aui-icon-small aui-iconfont-refresh"></span>
+            </button>
+        </div>
+    </div>
+    <div class="ai-gen-section-content" data-section-key="{$key}">
+        {$content|noAutoescape}
+    </div>
+</div>
+{/template}
+
+/**
+ * Save dialog for page title and options
+ * @param spaceKey
+ */
+{template .saveDialog}
+<section id="ai-generation-save-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer"
+         role="dialog" aria-hidden="true">
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">{getText('ai.generation.preview.save.title')}</h2>
+    </header>
+    <div class="aui-dialog2-content">
+        <form class="aui">
+            <div class="field-group">
+                <label for="ai-gen-save-title">{getText('ai.generation.preview.save.page.title')}<span class="aui-icon icon-required"></span></label>
+                <input type="text" id="ai-gen-save-title" class="text long-field"/>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-save-parent">{getText('ai.generation.preview.save.parent')}</label>
+                <input type="text" id="ai-gen-save-parent-search" class="text long-field"
+                       placeholder="{getText('ai.generation.preview.save.parent.placeholder')}"/>
+                <input type="hidden" id="ai-gen-save-parent-id" value="0"/>
+            </div>
+        </form>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button id="ai-gen-save-confirm" class="aui-button aui-button-primary">
+                {getText('ai.generation.preview.save.confirm')}
+            </button>
+            <button id="ai-gen-save-cancel" class="aui-button aui-button-link">
+                {getText('ai.generation.wizard.cancel')}
+            </button>
+        </div>
+    </footer>
+</section>
+{/template}
+
+/**
+ * Section edit inline panel
+ * @param key
+ * @param content
+ */
+{template .sectionEditor}
+<div class="ai-gen-section-editor" data-section-key="{$key}">
+    <textarea class="ai-gen-section-textarea" rows="15">{$content}</textarea>
+    <div class="ai-gen-editor-actions">
+        <button class="aui-button aui-button-primary ai-gen-editor-save" data-section-key="{$key}">
+            {getText('ai.generation.preview.editor.save')}
+        </button>
+        <button class="aui-button ai-gen-editor-cancel" data-section-key="{$key}">
+            {getText('ai.generation.wizard.cancel')}
+        </button>
+        <button class="aui-button ai-gen-editor-diff" data-section-key="{$key}">
+            {getText('ai.generation.preview.editor.diff')}
+        </button>
+    </div>
+</div>
+{/template}
+
+/**
+ * Quality warning item
+ * @param type
+ * @param message
+ */
+{template .qualityWarning}
+<div class="ai-gen-quality-item ai-gen-quality-{$type}">
+    <span class="aui-icon aui-icon-small aui-iconfont-{if $type == 'error'}error{elseif $type == 'warning'}warning{else}info{/if}"></span>
+    <span>{$message}</span>
+</div>
+{/template}

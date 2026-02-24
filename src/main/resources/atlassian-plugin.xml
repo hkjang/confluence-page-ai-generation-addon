@@ -1,0 +1,155 @@
+<atlassian-plugin key="com.mycompany.confluence.ai-page-generation"
+                  name="Expert Document Page AI Generation"
+                  plugins-version="2">
+
+    <plugin-info>
+        <description>AI-powered expert document page generation for Confluence Server.
+            Generates professional documents with templates, quality checks, and section-by-section AI generation.</description>
+        <version>1.0.0</version>
+        <vendor name="MyCompany" url="https://mycompany.com"/>
+        <param name="plugin-icon">images/plugin-icon.svg</param>
+        <param name="plugin-logo">images/plugin-icon.svg</param>
+        <param name="configure.url">/plugins/servlet/ai-generation/admin/config</param>
+        <param name="atlassian-data-center-compatible">true</param>
+    </plugin-info>
+
+    <!-- ======================== -->
+    <!-- I18N RESOURCES           -->
+    <!-- ======================== -->
+    <resource type="i18n" name="i18n" location="i18n/ai-generation"/>
+
+    <!-- ======================== -->
+    <!-- ACTIVE OBJECTS            -->
+    <!-- ======================== -->
+    <ao key="ao-module">
+        <description>Active Objects module for AI Generation data persistence</description>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoGenerationJob</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoGenerationSection</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoAuditLog</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoUsageRecord</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoPromptTemplate</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoGlossaryTerm</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoForbiddenWord</entity>
+        <entity>com.mycompany.confluence.aigeneration.ao.AoSpacePolicy</entity>
+    </ao>
+
+    <!-- ====================================================== -->
+    <!-- All components are discovered via Spring Scanner @Named -->
+    <!-- No component or component-import elements needed        -->
+    <!-- ====================================================== -->
+
+    <!-- ======================== -->
+    <!-- REST MODULE              -->
+    <!-- ======================== -->
+    <rest key="ai-generation-rest" path="/ai-generation" version="1.0">
+        <description>AI Generation REST API</description>
+        <package>com.mycompany.confluence.aigeneration.rest</package>
+    </rest>
+
+    <!-- ======================== -->
+    <!-- WEB ITEMS (Menu Entries) -->
+    <!-- ======================== -->
+
+    <!-- Space tools menu entry -->
+    <web-item key="ai-generation-space-menu" name="AI Page Generation Space Menu"
+              section="system.space.tools/addons" weight="10">
+        <description key="ai.generation.menu.description"/>
+        <label key="ai.generation.menu.label"/>
+        <link linkId="ai-generation-trigger">/plugins/servlet/ai-generation/wizard?spaceKey=$helper.spaceKey</link>
+        <icon height="16" width="16">
+            <link>/download/resources/com.mycompany.confluence.ai-page-generation:ai-generation-wizard-resources/images/wizard-icon.svg</link>
+        </icon>
+        <condition class="com.mycompany.confluence.aigeneration.condition.AiGenerationEnabledCondition"/>
+        <condition class="com.mycompany.confluence.aigeneration.condition.AiGenerationSpaceCondition"/>
+    </web-item>
+
+    <!-- Create dialog content menu entry -->
+    <web-item key="ai-generation-create-menu" name="AI Generation in Create Menu"
+              section="system.create.dialog/content" weight="200">
+        <description key="ai.generation.create.menu.description"/>
+        <label key="ai.generation.create.menu.label"/>
+        <link linkId="ai-generation-create-trigger">#</link>
+        <condition class="com.mycompany.confluence.aigeneration.condition.AiGenerationEnabledCondition"/>
+    </web-item>
+
+    <!-- Admin configuration menu entry -->
+    <web-item key="ai-generation-admin-menu" name="AI Generation Admin"
+              section="system.admin/configuration" weight="200">
+        <description key="ai.generation.admin.menu.description"/>
+        <label key="ai.generation.admin.menu.label"/>
+        <link>/plugins/servlet/ai-generation/admin/config</link>
+        <condition class="com.atlassian.confluence.plugin.descriptor.web.conditions.SystemAdministratorCondition"/>
+    </web-item>
+
+    <!-- ======================== -->
+    <!-- WEB RESOURCES            -->
+    <!-- ======================== -->
+
+    <!-- Wizard resources -->
+    <web-resource key="ai-generation-wizard-resources" name="AI Generation Wizard Resources">
+        <transformation extension="soy">
+            <transformer key="soyTransformer">
+                <functions>com.atlassian.confluence.plugins.soy:soy-core-functions</functions>
+            </transformer>
+        </transformation>
+        <transformation extension="js">
+            <transformer key="jsI18n"/>
+        </transformation>
+
+        <resource type="download" name="wizard-soy.js" location="/soy/wizard.soy"/>
+        <resource type="download" name="components-soy.js" location="/soy/components.soy"/>
+        <resource type="download" name="preview-soy.js" location="/soy/preview.soy"/>
+        <resource type="download" name="ai-generation-wizard.js" location="/js/ai-generation-wizard.js"/>
+        <resource type="download" name="ai-generation-polling.js" location="/js/ai-generation-polling.js"/>
+        <resource type="download" name="ai-generation-preview.js" location="/js/ai-generation-preview.js"/>
+        <resource type="download" name="ai-generation-diff.js" location="/js/ai-generation-diff.js"/>
+        <resource type="download" name="ai-generation-wizard.css" location="/css/ai-generation-wizard.css"/>
+        <resource type="download" name="ai-generation-preview.css" location="/css/ai-generation-preview.css"/>
+        <resource type="download" name="images/" location="/images/"/>
+
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <dependency>com.atlassian.auiplugin:dialog2</dependency>
+        <dependency>com.atlassian.auiplugin:aui-select</dependency>
+        <dependency>com.atlassian.auiplugin:aui-flag</dependency>
+        <dependency>com.atlassian.auiplugin:aui-spinner</dependency>
+        <dependency>com.atlassian.auiplugin:aui-progressbar</dependency>
+
+        <context>atl.general</context>
+        <context>atl.admin</context>
+    </web-resource>
+
+    <!-- Admin resources -->
+    <web-resource key="ai-generation-admin-resources" name="AI Generation Admin Resources">
+        <transformation extension="soy">
+            <transformer key="soyTransformer">
+                <functions>com.atlassian.confluence.plugins.soy:soy-core-functions</functions>
+            </transformer>
+        </transformation>
+        <transformation extension="js">
+            <transformer key="jsI18n"/>
+        </transformation>
+
+        <resource type="download" name="admin-soy.js" location="/soy/admin.soy"/>
+        <resource type="download" name="ai-generation-admin.js" location="/js/ai-generation-admin.js"/>
+        <resource type="download" name="ai-generation-admin.css" location="/css/ai-generation-admin.css"/>
+
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <dependency>com.atlassian.auiplugin:dialog2</dependency>
+        <dependency>com.atlassian.auiplugin:aui-select</dependency>
+        <dependency>com.atlassian.auiplugin:aui-tabs</dependency>
+        <dependency>com.atlassian.auiplugin:aui-flag</dependency>
+        <dependency>com.atlassian.auiplugin:aui-toggle</dependency>
+
+        <context>ai-generation-admin</context>
+    </web-resource>
+
+    <!-- ======================== -->
+    <!-- SERVLETS                 -->
+    <!-- ======================== -->
+    <servlet key="ai-generation-admin-servlet" name="AI Generation Admin Servlet"
+             class="com.mycompany.confluence.aigeneration.servlet.AdminConfigServlet">
+        <description>Admin configuration servlet for AI Generation</description>
+        <url-pattern>/ai-generation/admin/*</url-pattern>
+    </servlet>
+
+</atlassian-plugin>

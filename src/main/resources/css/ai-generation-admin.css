@@ -1,0 +1,224 @@
+/* ============================================
+ * AI Generation Admin Styles
+ * ============================================ */
+
+.ai-gen-admin {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.ai-gen-admin h2 {
+    margin: 24px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #DFE1E6;
+    color: #172B4D;
+    font-size: 20px;
+}
+
+.ai-gen-admin h2:first-child {
+    margin-top: 0;
+}
+
+.ai-gen-admin h3 {
+    margin: 20px 0 10px 0;
+    color: #172B4D;
+    font-size: 16px;
+}
+
+.ai-gen-admin .description {
+    color: #6B778C;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.ai-gen-admin-panel {
+    padding: 20px 0;
+}
+
+/* Add Forms */
+.ai-gen-add-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 12px;
+    background: #F4F5F7;
+    border-radius: 3px;
+    flex-wrap: wrap;
+}
+
+.ai-gen-add-form .text {
+    flex-shrink: 0;
+}
+
+.ai-gen-add-form label {
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Connection Test Result */
+.ai-gen-connection-result {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.ai-gen-connected {
+    background: #E3FCEF;
+    border: 1px solid #ABF5D1;
+    color: #006644;
+}
+
+.ai-gen-disconnected {
+    background: #FFEBE6;
+    border: 1px solid #FFBDAD;
+    color: #BF2600;
+}
+
+.ai-gen-error-detail {
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+/* Prompt Preview */
+.ai-gen-prompt-preview {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #6B778C;
+}
+
+/* Usage Summary Cards */
+.ai-gen-usage-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.ai-gen-usage-card {
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #DFE1E6;
+    border-radius: 8px;
+    text-align: center;
+    transition: box-shadow 0.2s;
+}
+
+.ai-gen-usage-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ai-gen-usage-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0052CC;
+    line-height: 1.2;
+}
+
+.ai-gen-usage-label {
+    font-size: 12px;
+    color: #6B778C;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Audit Filters */
+.ai-gen-audit-filters {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #F4F5F7;
+    border-radius: 3px;
+    flex-wrap: wrap;
+}
+
+.ai-gen-audit-filters .field-group {
+    margin-bottom: 0;
+}
+
+.ai-gen-audit-filters label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B778C;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.ai-gen-audit-details {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #6B778C;
+}
+
+/* Audit Paging */
+.ai-gen-audit-paging {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    justify-content: center;
+}
+
+/* Tables */
+.ai-gen-admin table.aui {
+    margin-top: 10px;
+}
+
+.ai-gen-admin table.aui th {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #6B778C;
+    font-weight: 600;
+}
+
+.ai-gen-admin table.aui td {
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+/* Buttons container */
+.ai-gen-admin .buttons-container {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #DFE1E6;
+}
+
+/* Field enhancements */
+.ai-gen-admin fieldset {
+    margin-bottom: 24px;
+}
+
+.ai-gen-admin fieldset legend span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #172B4D;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ai-gen-usage-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ai-gen-audit-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ai-gen-add-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

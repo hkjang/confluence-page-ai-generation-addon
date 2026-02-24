@@ -1,0 +1,146 @@
+{namespace AiGeneration.Admin}
+
+/**
+ * Connection test result display
+ * @param connected
+ * @param endpoint
+ * @param model
+ * @param? error
+ */
+{template .connectionResult}
+<div class="ai-gen-connection-result {if $connected}ai-gen-connected{else}ai-gen-disconnected{/if}">
+    {if $connected}
+        <span class="aui-icon aui-icon-small aui-iconfont-approve"></span>
+        <strong>{getText('ai.generation.admin.connected')}</strong>
+        <span> — {$endpoint} ({$model})</span>
+    {else}
+        <span class="aui-icon aui-icon-small aui-iconfont-error"></span>
+        <strong>{getText('ai.generation.admin.disconnected')}</strong>
+        {if $error}
+            <p class="ai-gen-error-detail">{$error}</p>
+        {/if}
+    {/if}
+</div>
+{/template}
+
+/**
+ * Policy row for space policy table
+ * @param spaceKey
+ * @param maxRequestsPerDay
+ * @param maxTokensPerRequest
+ * @param enabled
+ */
+{template .policyRow}
+<tr data-space-key="{$spaceKey}">
+    <td>{$spaceKey}</td>
+    <td>{$maxRequestsPerDay}</td>
+    <td>{$maxTokensPerRequest}</td>
+    <td>
+        {if $enabled}
+            <span class="aui-lozenge aui-lozenge-success">{getText('ai.generation.admin.enabled')}</span>
+        {else}
+            <span class="aui-lozenge aui-lozenge-moved">{getText('ai.generation.admin.disabled')}</span>
+        {/if}
+    </td>
+    <td>
+        <button class="aui-button aui-button-subtle ai-gen-edit-policy" data-space-key="{$spaceKey}">
+            <span class="aui-icon aui-icon-small aui-iconfont-edit"></span>
+        </button>
+        <button class="aui-button aui-button-subtle ai-gen-delete-policy" data-space-key="{$spaceKey}">
+            <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
+        </button>
+    </td>
+</tr>
+{/template}
+
+/**
+ * Audit log row
+ * @param userKey
+ * @param action
+ * @param spaceKey
+ * @param details
+ * @param timestamp
+ */
+{template .auditRow}
+<tr>
+    <td>{$timestamp}</td>
+    <td>{$userKey}</td>
+    <td><span class="aui-lozenge">{$action}</span></td>
+    <td>{$spaceKey}</td>
+    <td class="ai-gen-audit-details">{$details}</td>
+</tr>
+{/template}
+
+/**
+ * Glossary term row
+ * @param id
+ * @param term
+ * @param definition
+ * @param spaceKey
+ */
+{template .glossaryRow}
+<tr data-term-id="{$id}">
+    <td>{$term}</td>
+    <td>{$definition}</td>
+    <td>{if $spaceKey}{$spaceKey}{else}{getText('ai.generation.admin.global')}{/if}</td>
+    <td>
+        <button class="aui-button aui-button-subtle ai-gen-edit-glossary" data-id="{$id}">
+            <span class="aui-icon aui-icon-small aui-iconfont-edit"></span>
+        </button>
+        <button class="aui-button aui-button-subtle ai-gen-delete-glossary" data-id="{$id}">
+            <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
+        </button>
+    </td>
+</tr>
+{/template}
+
+/**
+ * Forbidden word row
+ * @param id
+ * @param pattern
+ * @param replacement
+ * @param isRegex
+ * @param spaceKey
+ */
+{template .forbiddenRow}
+<tr data-word-id="{$id}">
+    <td>{$pattern}</td>
+    <td>{if $replacement}{$replacement}{else}<em>({getText('ai.generation.admin.remove')})</em>{/if}</td>
+    <td>{if $isRegex}{getText('ai.generation.admin.regex')}{else}{getText('ai.generation.admin.literal')}{/if}</td>
+    <td>{if $spaceKey}{$spaceKey}{else}{getText('ai.generation.admin.global')}{/if}</td>
+    <td>
+        <button class="aui-button aui-button-subtle ai-gen-delete-forbidden" data-id="{$id}">
+            <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
+        </button>
+    </td>
+</tr>
+{/template}
+
+/**
+ * Usage statistics summary card
+ * @param totalRequests
+ * @param totalTokens
+ * @param activeUsers
+ * @param activeSpaces
+ * @param period
+ */
+{template .usageSummary}
+<div class="ai-gen-usage-summary">
+    <div class="ai-gen-usage-card">
+        <div class="ai-gen-usage-value">{$totalRequests}</div>
+        <div class="ai-gen-usage-label">{getText('ai.generation.admin.usage.requests')}</div>
+    </div>
+    <div class="ai-gen-usage-card">
+        <div class="ai-gen-usage-value">{$totalTokens}</div>
+        <div class="ai-gen-usage-label">{getText('ai.generation.admin.usage.tokens')}</div>
+    </div>
+    <div class="ai-gen-usage-card">
+        <div class="ai-gen-usage-value">{$activeUsers}</div>
+        <div class="ai-gen-usage-label">{getText('ai.generation.admin.usage.users')}</div>
+    </div>
+    <div class="ai-gen-usage-card">
+        <div class="ai-gen-usage-value">{$activeSpaces}</div>
+        <div class="ai-gen-usage-label">{getText('ai.generation.admin.usage.spaces')}</div>
+    </div>
+</div>
+{/template}

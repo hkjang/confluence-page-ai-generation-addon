@@ -1,0 +1,141 @@
+<html>
+<head>
+    <title>AI 문서 생성 - 스페이스 정책</title>
+    <meta name="decorator" content="atl.admin" />
+    $webResourceManager.requireResource("com.mycompany.confluence.ai-page-generation:ai-generation-admin-resources")
+</head>
+<body>
+<div id="ai-gen-admin-container" class="ai-gen-admin">
+    <!-- Navigation Tabs -->
+    <div class="aui-tabs horizontal-tabs">
+        <ul class="tabs-menu">
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a>
+            </li>
+            <li class="menu-item active-tab">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="ai-gen-panel-policies" class="ai-gen-admin-panel">
+        <h2>스페이스별 정책 관리</h2>
+        <p class="description">스페이스별로 AI 문서 생성 기능의 사용을 제어합니다.
+            정책이 없는 스페이스는 전역 기본 설정을 따릅니다.</p>
+
+        <table id="ai-gen-policy-table" class="aui">
+            <thead>
+                <tr>
+                    <th>스페이스 키</th>
+                    <th>일일 최대 요청</th>
+                    <th>최대 토큰</th>
+                    <th>상태</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>새 정책 추가</h3>
+        <form class="aui" id="ai-gen-policy-form">
+            <div class="field-group">
+                <label for="ai-gen-policy-space">스페이스 키<span class="aui-icon icon-required"></span></label>
+                <input type="text" id="ai-gen-policy-space" class="text medium-field" placeholder="예: DEV, PROJ"/>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-policy-max-requests">일일 최대 요청 수</label>
+                <input type="number" id="ai-gen-policy-max-requests" class="text short-field" value="100"/>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-policy-max-tokens">요청당 최대 토큰</label>
+                <input type="number" id="ai-gen-policy-max-tokens" class="text short-field" value="4096"/>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-policy-groups">허용 그룹 (쉼표 구분)</label>
+                <input type="text" id="ai-gen-policy-groups" class="text long-field"
+                       placeholder="예: confluence-users, developers (비우면 모든 그룹 허용)"/>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-policy-templates">허용 템플릿 (쉼표 구분)</label>
+                <input type="text" id="ai-gen-policy-templates" class="text long-field"
+                       placeholder="예: meeting-notes, design-doc (비우면 모든 템플릿 허용)"/>
+            </div>
+            <div class="field-group">
+                <label>
+                    <input type="checkbox" id="ai-gen-policy-enabled" checked/> 활성화
+                </label>
+            </div>
+            <div class="buttons-container">
+                <div class="buttons">
+                    <button type="button" id="ai-gen-add-policy" class="aui-button aui-button-primary">정책 추가</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+AJS.toInit(function() {
+    var REST_BASE = AJS.contextPath() + '/rest/ai-generation/1.0';
+
+    function loadPolicies() {
+        AJS.$.ajax({
+            url: REST_BASE + '/admin/policies',
+            dataType: 'json',
+            success: function(policies) {
+                var tbody = AJS.$('#ai-gen-policy-table tbody').empty();
+                AJS.$.each(policies, function(i, p) {
+                    tbody.append(AiGeneration.Admin.policyRow(p));
+                });
+            }
+        });
+    }
+
+    AJS.$('#ai-gen-add-policy').on('click', function() {
+        var spaceKey = AJS.$('#ai-gen-policy-space').val();
+        if (!spaceKey) {
+            AJS.flag({type: 'warning', title: '스페이스 키를 입력하세요.', close: 'auto'});
+            return;
+        }
+
+        var groups = AJS.$('#ai-gen-policy-groups').val();
+        var templates = AJS.$('#ai-gen-policy-templates').val();
+
+        AJS.$.ajax({
+            url: REST_BASE + '/admin/policies/' + spaceKey,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                maxRequestsPerDay: parseInt(AJS.$('#ai-gen-policy-max-requests').val()) || 100,
+                maxTokensPerRequest: parseInt(AJS.$('#ai-gen-policy-max-tokens').val()) || 4096,
+                allowedGroups: groups ? groups.split(',').map(function(s) { return s.trim(); }) : [],
+                allowedTemplates: templates ? templates.split(',').map(function(s) { return s.trim(); }) : [],
+                enabled: AJS.$('#ai-gen-policy-enabled').is(':checked')
+            }),
+            dataType: 'json',
+            success: function() {
+                AJS.$('#ai-gen-policy-space').val('');
+                loadPolicies();
+                AJS.flag({type: 'success', title: '정책이 저장되었습니다.', close: 'auto'});
+            }
+        });
+    });
+
+    AJS.$(document).on('click', '.ai-gen-delete-policy', function() {
+        var spaceKey = AJS.$(this).data('space-key');
+        if (confirm('정책을 삭제하시겠습니까? (' + spaceKey + ')')) {
+            AJS.$.ajax({url: REST_BASE + '/admin/policies/' + spaceKey, type: 'DELETE', success: loadPolicies});
+        }
+    });
+
+    loadPolicies();
+});
+</script>
+</body>
+</html>

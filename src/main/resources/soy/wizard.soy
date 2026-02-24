@@ -1,0 +1,210 @@
+{namespace AiGeneration.Wizard}
+
+/**
+ * Main wizard dialog with 4 steps.
+ * @param spaceKey
+ */
+{template .dialog}
+<section id="ai-generation-wizard-dialog" class="aui-dialog2 aui-dialog2-large aui-layer"
+         role="dialog" aria-hidden="true" data-aui-remove-on-hide="true">
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">{getText('ai.generation.wizard.title')}</h2>
+        <a class="aui-dialog2-header-close">
+            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">{getText('ai.generation.wizard.close')}</span>
+        </a>
+    </header>
+    <div class="aui-dialog2-content">
+        <div class="ai-gen-wizard-steps">
+            <ol class="aui-progress-tracker">
+                <li class="aui-progress-tracker-step aui-progress-tracker-step-current" data-step="1">
+                    <span>{getText('ai.generation.wizard.step1')}</span>
+                </li>
+                <li class="aui-progress-tracker-step" data-step="2">
+                    <span>{getText('ai.generation.wizard.step2')}</span>
+                </li>
+                <li class="aui-progress-tracker-step" data-step="3">
+                    <span>{getText('ai.generation.wizard.step3')}</span>
+                </li>
+                <li class="aui-progress-tracker-step" data-step="4">
+                    <span>{getText('ai.generation.wizard.step4')}</span>
+                </li>
+            </ol>
+        </div>
+
+        <div class="ai-gen-wizard-content">
+            {call .step1 data="all" /}
+            {call .step2 data="all" /}
+            {call .step3 data="all" /}
+            {call .step4 data="all" /}
+        </div>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button id="ai-gen-wizard-generate" class="aui-button aui-button-primary" style="display:none;">
+                {getText('ai.generation.wizard.generate')}
+            </button>
+            <button id="ai-gen-wizard-next" class="aui-button aui-button-primary">
+                {getText('ai.generation.wizard.next')}
+            </button>
+            <button id="ai-gen-wizard-prev" class="aui-button" style="display:none;">
+                {getText('ai.generation.wizard.prev')}
+            </button>
+            <button id="ai-gen-wizard-cancel" class="aui-button aui-button-link">
+                {getText('ai.generation.wizard.cancel')}
+            </button>
+        </div>
+        <div class="aui-dialog2-footer-hint">
+            <span id="ai-gen-wizard-step-label"></span>
+        </div>
+    </footer>
+</section>
+{/template}
+
+/**
+ * Step 1: Template selection
+ * @param spaceKey
+ */
+{template .step1}
+<div class="ai-gen-step" data-step="1">
+    <h3>{getText('ai.generation.wizard.step1.title')}</h3>
+    <p class="ai-gen-step-desc">{getText('ai.generation.wizard.step1.desc')}</p>
+    <div id="ai-gen-template-list" class="ai-gen-template-grid">
+        {call AiGeneration.Components.spinner /}
+    </div>
+    <input type="hidden" id="ai-gen-selected-template" value=""/>
+    <input type="hidden" id="ai-gen-space-key" value="{$spaceKey}"/>
+</div>
+{/template}
+
+/**
+ * Step 2: Purpose, audience, tone, length settings
+ * @param spaceKey
+ */
+{template .step2}
+<div class="ai-gen-step" data-step="2" style="display:none;">
+    <h3>{getText('ai.generation.wizard.step2.title')}</h3>
+    <form class="aui">
+        <div class="field-group">
+            <label for="ai-gen-purpose">{getText('ai.generation.wizard.purpose')}<span class="aui-icon icon-required"></span></label>
+            <textarea id="ai-gen-purpose" class="textarea long-field" rows="3"
+                      placeholder="{getText('ai.generation.wizard.purpose.placeholder')}"></textarea>
+        </div>
+        <div class="field-group">
+            <label for="ai-gen-audience">{getText('ai.generation.wizard.audience')}</label>
+            <select id="ai-gen-audience" class="select">
+                <option value="team">{getText('ai.generation.wizard.audience.team')}</option>
+                <option value="management">{getText('ai.generation.wizard.audience.management')}</option>
+                <option value="external">{getText('ai.generation.wizard.audience.external')}</option>
+                <option value="technical">{getText('ai.generation.wizard.audience.technical')}</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label for="ai-gen-tone">{getText('ai.generation.wizard.tone')}</label>
+            <select id="ai-gen-tone" class="select">
+                <option value="formal">{getText('ai.generation.wizard.tone.formal')}</option>
+                <option value="casual">{getText('ai.generation.wizard.tone.casual')}</option>
+                <option value="technical">{getText('ai.generation.wizard.tone.technical')}</option>
+                <option value="persuasive">{getText('ai.generation.wizard.tone.persuasive')}</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label for="ai-gen-length">{getText('ai.generation.wizard.length')}</label>
+            <select id="ai-gen-length" class="select">
+                <option value="brief">{getText('ai.generation.wizard.length.brief')}</option>
+                <option value="standard" selected>{getText('ai.generation.wizard.length.standard')}</option>
+                <option value="detailed">{getText('ai.generation.wizard.length.detailed')}</option>
+                <option value="comprehensive">{getText('ai.generation.wizard.length.comprehensive')}</option>
+            </select>
+        </div>
+    </form>
+</div>
+{/template}
+
+/**
+ * Step 3: Context collection (pages, attachments, labels)
+ * @param spaceKey
+ */
+{template .step3}
+<div class="ai-gen-step" data-step="3" style="display:none;">
+    <h3>{getText('ai.generation.wizard.step3.title')}</h3>
+    <p class="ai-gen-step-desc">{getText('ai.generation.wizard.step3.desc')}</p>
+
+    <div class="field-group">
+        <label>{getText('ai.generation.wizard.context.pages')}</label>
+        <div id="ai-gen-page-picker" class="ai-gen-picker">
+            <input type="text" id="ai-gen-page-search" class="text" placeholder="{getText('ai.generation.wizard.context.pages.search')}"/>
+            <div id="ai-gen-page-results" class="ai-gen-picker-results"></div>
+            <div id="ai-gen-selected-pages" class="ai-gen-selected-items"></div>
+        </div>
+    </div>
+
+    <div class="field-group">
+        <label>{getText('ai.generation.wizard.context.labels')}</label>
+        <div id="ai-gen-label-picker" class="ai-gen-picker">
+            <input type="text" id="ai-gen-label-search" class="text" placeholder="{getText('ai.generation.wizard.context.labels.search')}"/>
+            <div id="ai-gen-label-results" class="ai-gen-picker-results"></div>
+            <div id="ai-gen-selected-labels" class="ai-gen-selected-items"></div>
+        </div>
+    </div>
+
+    <div class="field-group">
+        <label for="ai-gen-additional-context">{getText('ai.generation.wizard.context.additional')}</label>
+        <textarea id="ai-gen-additional-context" class="textarea long-field" rows="3"
+                  placeholder="{getText('ai.generation.wizard.context.additional.placeholder')}"></textarea>
+    </div>
+
+    <div class="field-group">
+        <label for="ai-gen-parent-page">{getText('ai.generation.wizard.parent.page')}</label>
+        <input type="text" id="ai-gen-parent-page-search" class="text" placeholder="{getText('ai.generation.wizard.parent.page.search')}"/>
+        <input type="hidden" id="ai-gen-parent-page-id" value="0"/>
+    </div>
+</div>
+{/template}
+
+/**
+ * Step 4: Review and generate
+ * @param spaceKey
+ */
+{template .step4}
+<div class="ai-gen-step" data-step="4" style="display:none;">
+    <h3>{getText('ai.generation.wizard.step4.title')}</h3>
+    <div id="ai-gen-review-summary" class="ai-gen-review-panel">
+        <table class="aui">
+            <tbody>
+                <tr><th>{getText('ai.generation.wizard.review.template')}</th><td id="ai-gen-review-template"></td></tr>
+                <tr><th>{getText('ai.generation.wizard.review.purpose')}</th><td id="ai-gen-review-purpose"></td></tr>
+                <tr><th>{getText('ai.generation.wizard.review.audience')}</th><td id="ai-gen-review-audience"></td></tr>
+                <tr><th>{getText('ai.generation.wizard.review.tone')}</th><td id="ai-gen-review-tone"></td></tr>
+                <tr><th>{getText('ai.generation.wizard.review.length')}</th><td id="ai-gen-review-length"></td></tr>
+                <tr><th>{getText('ai.generation.wizard.review.context')}</th><td id="ai-gen-review-context"></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="ai-gen-sections-preview" class="ai-gen-sections-list">
+        <h4>{getText('ai.generation.wizard.review.sections')}</h4>
+        <div id="ai-gen-section-list"></div>
+    </div>
+</div>
+{/template}
+
+/**
+ * Template card for template selection grid
+ * @param key
+ * @param name
+ * @param description
+ * @param iconClass
+ * @param sectionCount
+ */
+{template .templateCard}
+<div class="ai-gen-template-card" data-template-key="{$key}">
+    <div class="ai-gen-template-icon">
+        <span class="aui-icon aui-icon-large {$iconClass}"></span>
+    </div>
+    <div class="ai-gen-template-info">
+        <h4>{$name}</h4>
+        <p>{$description}</p>
+        <span class="aui-lozenge">{$sectionCount} {getText('ai.generation.wizard.sections')}</span>
+    </div>
+</div>
+{/template}

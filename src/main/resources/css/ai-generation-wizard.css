@@ -1,0 +1,248 @@
+/* ============================================
+ * AI Generation Wizard Styles
+ * ============================================ */
+
+/* Wizard Steps */
+.ai-gen-wizard-steps {
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.ai-gen-wizard-content {
+    min-height: 400px;
+    padding: 10px 20px;
+}
+
+.ai-gen-step {
+    animation: aiGenFadeIn 0.3s ease;
+}
+
+@keyframes aiGenFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-gen-step h3 {
+    margin: 0 0 10px 0;
+    color: #172B4D;
+    font-size: 18px;
+}
+
+.ai-gen-step-desc {
+    color: #6B778C;
+    margin-bottom: 20px;
+}
+
+/* Template Grid */
+.ai-gen-template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.ai-gen-template-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px;
+    border: 2px solid #DFE1E6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.ai-gen-template-card:hover {
+    border-color: #4C9AFF;
+    background: #F4F5F7;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ai-gen-template-card.selected {
+    border-color: #0052CC;
+    background: #DEEBFF;
+    box-shadow: 0 0 0 1px #0052CC;
+}
+
+.ai-gen-template-icon {
+    margin-right: 12px;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.ai-gen-template-icon .aui-icon {
+    color: #0052CC;
+}
+
+.ai-gen-template-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: #172B4D;
+}
+
+.ai-gen-template-info p {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: #6B778C;
+    line-height: 1.4;
+}
+
+/* Picker (Page/Label search) */
+.ai-gen-picker {
+    position: relative;
+}
+
+.ai-gen-picker-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #DFE1E6;
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+    display: none;
+}
+
+.ai-gen-picker-results:not(:empty) {
+    display: block;
+}
+
+.ai-gen-picker-result {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 13px;
+}
+
+.ai-gen-picker-result:hover {
+    background: #DEEBFF;
+}
+
+.ai-gen-selected-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.ai-gen-picker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #DEEBFF;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.ai-gen-picker-item .aui-button-subtle {
+    padding: 0 2px;
+    line-height: 1;
+}
+
+/* Review Panel */
+.ai-gen-review-panel {
+    margin-bottom: 20px;
+}
+
+.ai-gen-review-panel table th {
+    width: 120px;
+    text-align: right;
+    padding-right: 12px;
+    color: #6B778C;
+    font-weight: 600;
+}
+
+.ai-gen-review-section {
+    padding: 6px 8px;
+    border-bottom: 1px solid #F4F5F7;
+    font-size: 13px;
+}
+
+.ai-gen-review-section .aui-lozenge {
+    margin-left: 6px;
+    font-size: 10px;
+}
+
+/* Spinner */
+.ai-gen-spinner {
+    text-align: center;
+    padding: 40px;
+}
+
+.ai-gen-spinner-text {
+    display: block;
+    margin-top: 12px;
+    color: #6B778C;
+}
+
+/* Generation Progress */
+.ai-gen-generation-progress {
+    padding: 20px;
+}
+
+.ai-gen-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ai-gen-progress-header h3 {
+    margin: 0;
+}
+
+.ai-gen-progress {
+    margin: 16px 0;
+}
+
+.ai-gen-progress-label {
+    font-size: 13px;
+    color: #172B4D;
+    margin-bottom: 6px;
+}
+
+.ai-gen-progress-percent {
+    text-align: right;
+    font-size: 12px;
+    color: #6B778C;
+    margin-top: 4px;
+}
+
+.ai-gen-progress-sections {
+    margin-top: 16px;
+}
+
+.ai-gen-section-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #F4F5F7;
+    font-size: 13px;
+}
+
+.ai-gen-section-status-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.ai-gen-section-progress-title {
+    flex: 1;
+}
+
+.ai-gen-progress-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Empty state */
+.ai-gen-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6B778C;
+}
+
+.ai-gen-empty-state .aui-icon {
+    display: block;
+    margin: 0 auto 12px;
+    opacity: 0.5;
+}

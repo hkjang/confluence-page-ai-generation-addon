@@ -1,0 +1,186 @@
+{namespace AiGeneration.Components}
+
+/**
+ * Loading spinner
+ */
+{template .spinner}
+<div class="ai-gen-spinner">
+    <aui-spinner size="medium"></aui-spinner>
+    <span class="ai-gen-spinner-text">{getText('ai.generation.loading')}</span>
+</div>
+{/template}
+
+/**
+ * Error panel
+ * @param message
+ * @param? details
+ */
+{template .errorPanel}
+<div class="aui-message aui-message-error">
+    <p class="title"><strong>{getText('ai.generation.error')}</strong></p>
+    <p>{$message}</p>
+    {if $details}
+        <p class="ai-gen-error-details">{$details}</p>
+    {/if}
+</div>
+{/template}
+
+/**
+ * Success panel
+ * @param message
+ */
+{template .successPanel}
+<div class="aui-message aui-message-success">
+    <p>{$message}</p>
+</div>
+{/template}
+
+/**
+ * Warning panel
+ * @param message
+ */
+{template .warningPanel}
+<div class="aui-message aui-message-warning">
+    <p>{$message}</p>
+</div>
+{/template}
+
+/**
+ * Info panel
+ * @param message
+ */
+{template .infoPanel}
+<div class="aui-message aui-message-info">
+    <p>{$message}</p>
+</div>
+{/template}
+
+/**
+ * Progress bar with label
+ * @param percent
+ * @param label
+ */
+{template .progressBar}
+<div class="ai-gen-progress">
+    <div class="ai-gen-progress-label">{$label}</div>
+    <div class="aui-progress-indicator">
+        <span class="aui-progress-indicator-value" style="width:{$percent}%;"></span>
+    </div>
+    <div class="ai-gen-progress-percent">{$percent}%</div>
+</div>
+{/template}
+
+/**
+ * Generation progress panel (shown during generation)
+ * @param jobId
+ */
+{template .generationProgress}
+<div class="ai-gen-generation-progress" data-job-id="{$jobId}">
+    <div class="ai-gen-progress-header">
+        <h3>{getText('ai.generation.progress.title')}</h3>
+        <span class="aui-lozenge" id="ai-gen-progress-status">{getText('ai.generation.progress.queued')}</span>
+    </div>
+    <div id="ai-gen-progress-bar-container">
+        {call .progressBar}
+            {param percent: 0 /}
+            {param label: getText('ai.generation.progress.starting') /}
+        {/call}
+    </div>
+    <div id="ai-gen-progress-sections" class="ai-gen-progress-sections"></div>
+    <div class="ai-gen-progress-actions">
+        <button id="ai-gen-cancel-generation" class="aui-button aui-button-link">
+            {getText('ai.generation.progress.cancel')}
+        </button>
+    </div>
+</div>
+{/template}
+
+/**
+ * Section progress item
+ * @param key
+ * @param title
+ * @param status
+ */
+{template .sectionProgress}
+<div class="ai-gen-section-progress" data-section-key="{$key}">
+    <span class="ai-gen-section-status-icon">
+        {if $status == 'COMPLETED'}
+            <span class="aui-icon aui-icon-small aui-iconfont-approve"></span>
+        {elseif $status == 'IN_PROGRESS'}
+            <aui-spinner size="small"></aui-spinner>
+        {elseif $status == 'FAILED'}
+            <span class="aui-icon aui-icon-small aui-iconfont-error"></span>
+        {else}
+            <span class="aui-icon aui-icon-small aui-iconfont-time"></span>
+        {/if}
+    </span>
+    <span class="ai-gen-section-progress-title">{$title}</span>
+    <span class="aui-lozenge ai-gen-section-lozenge-{$status}">{$status}</span>
+</div>
+{/template}
+
+/**
+ * Empty state
+ * @param message
+ * @param? actionLabel
+ */
+{template .emptyState}
+<div class="ai-gen-empty-state">
+    <span class="aui-icon aui-icon-large aui-iconfont-info-filled"></span>
+    <p>{$message}</p>
+    {if $actionLabel}
+        <button class="aui-button ai-gen-empty-action">{$actionLabel}</button>
+    {/if}
+</div>
+{/template}
+
+/**
+ * Confirmation dialog
+ * @param title
+ * @param message
+ * @param confirmLabel
+ */
+{template .confirmDialog}
+<section class="aui-dialog2 aui-dialog2-small aui-layer ai-gen-confirm-dialog" role="dialog" aria-hidden="true">
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">{$title}</h2>
+    </header>
+    <div class="aui-dialog2-content">
+        <p>{$message}</p>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button class="aui-button aui-button-primary ai-gen-confirm-yes">{$confirmLabel}</button>
+            <button class="aui-button aui-button-link ai-gen-confirm-no">{getText('ai.generation.wizard.cancel')}</button>
+        </div>
+    </footer>
+</section>
+{/template}
+
+/**
+ * Page selector item in picker
+ * @param id
+ * @param title
+ */
+{template .pageItem}
+<div class="ai-gen-picker-item" data-page-id="{$id}">
+    <span class="aui-icon aui-icon-small aui-iconfont-page-default"></span>
+    <span class="ai-gen-picker-item-title">{$title}</span>
+    <button class="aui-button aui-button-subtle ai-gen-remove-item" data-page-id="{$id}">
+        <span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span>
+    </button>
+</div>
+{/template}
+
+/**
+ * Label selector item in picker
+ * @param name
+ */
+{template .labelItem}
+<div class="ai-gen-picker-item ai-gen-label-item" data-label="{$name}">
+    <span class="aui-lozenge">{$name}</span>
+    <button class="aui-button aui-button-subtle ai-gen-remove-label" data-label="{$name}">
+        <span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span>
+    </button>
+</div>
+{/template}

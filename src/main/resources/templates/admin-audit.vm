@@ -1,0 +1,161 @@
+<html>
+<head>
+    <title>AI 문서 생성 - 감사 로그</title>
+    <meta name="decorator" content="atl.admin" />
+    $webResourceManager.requireResource("com.mycompany.confluence.ai-page-generation:ai-generation-admin-resources")
+</head>
+<body>
+<div id="ai-gen-admin-container" class="ai-gen-admin">
+    <!-- Navigation Tabs -->
+    <div class="aui-tabs horizontal-tabs">
+        <ul class="tabs-menu">
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a>
+            </li>
+            <li class="menu-item active-tab">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="ai-gen-panel-audit" class="ai-gen-admin-panel">
+        <!-- Usage Statistics -->
+        <h2>사용량 현황</h2>
+        <div class="field-group">
+            <label for="ai-gen-usage-days">조회 기간</label>
+            <select id="ai-gen-usage-days" class="select">
+                <option value="1">오늘</option>
+                <option value="7" selected>최근 7일</option>
+                <option value="30">최근 30일</option>
+                <option value="90">최근 90일</option>
+            </select>
+        </div>
+        <div id="ai-gen-usage-container"></div>
+
+        <hr/>
+
+        <!-- Audit Log -->
+        <h2>감사 로그</h2>
+        <p class="description">AI 문서 생성 관련 모든 활동이 기록됩니다.</p>
+
+        <div class="ai-gen-audit-filters">
+            <div class="field-group">
+                <label for="ai-gen-audit-user">사용자</label>
+                <input type="text" id="ai-gen-audit-user" class="text" placeholder="사용자 키"/>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-audit-action">액션</label>
+                <select id="ai-gen-audit-action" class="select">
+                    <option value="">전체</option>
+                    <option value="GENERATE_SUBMITTED">생성 제출</option>
+                    <option value="GENERATE_COMPLETED">생성 완료</option>
+                    <option value="GENERATE_FAILED">생성 실패</option>
+                    <option value="GENERATE_CANCELLED">생성 취소</option>
+                    <option value="PAGE_SAVED">페이지 저장</option>
+                    <option value="PAGE_INSERTED">페이지 삽입</option>
+                    <option value="CONFIG_UPDATED">설정 변경</option>
+                    <option value="API_KEY_UPDATED">API 키 변경</option>
+                    <option value="POLICY_SAVED">정책 저장</option>
+                    <option value="POLICY_DELETED">정책 삭제</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-audit-space">스페이스</label>
+                <input type="text" id="ai-gen-audit-space" class="text" placeholder="스페이스 키"/>
+            </div>
+            <button type="button" id="ai-gen-audit-filter" class="aui-button">조회</button>
+        </div>
+
+        <table id="ai-gen-audit-table" class="aui aui-table-sortable">
+            <thead>
+                <tr>
+                    <th>시간</th>
+                    <th>사용자</th>
+                    <th>액션</th>
+                    <th>스페이스</th>
+                    <th>상세</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="ai-gen-audit-paging">
+            <button type="button" id="ai-gen-audit-prev" class="aui-button" disabled>이전</button>
+            <span>총 <strong id="ai-gen-audit-total">0</strong>건</span>
+            <button type="button" id="ai-gen-audit-next" class="aui-button">다음</button>
+        </div>
+    </div>
+</div>
+
+<script>
+AJS.toInit(function() {
+    var REST_BASE = AJS.contextPath() + '/rest/ai-generation/1.0';
+    var auditOffset = 0;
+    var auditLimit = 50;
+
+    function loadUsage() {
+        var days = parseInt(AJS.$('#ai-gen-usage-days').val()) || 7;
+        AJS.$.ajax({
+            url: REST_BASE + '/admin/usage',
+            data: {days: days},
+            dataType: 'json',
+            success: function(summary) {
+                AJS.$('#ai-gen-usage-container').html(
+                    AiGeneration.Admin.usageSummary({
+                        totalRequests: summary.totalRequests || 0,
+                        totalTokens: summary.totalTokens || 0,
+                        activeUsers: summary.activeUsers || 0,
+                        activeSpaces: summary.activeSpaces || 0,
+                        period: days + '일'
+                    })
+                );
+            }
+        });
+    }
+
+    function loadAuditLog() {
+        AJS.$.ajax({
+            url: REST_BASE + '/admin/audit',
+            data: {
+                offset: auditOffset,
+                limit: auditLimit,
+                userKey: AJS.$('#ai-gen-audit-user').val() || undefined,
+                action: AJS.$('#ai-gen-audit-action').val() || undefined,
+                spaceKey: AJS.$('#ai-gen-audit-space').val() || undefined
+            },
+            dataType: 'json',
+            success: function(result) {
+                var tbody = AJS.$('#ai-gen-audit-table tbody').empty();
+                AJS.$.each(result.items, function(i, log) {
+                    tbody.append(AiGeneration.Admin.auditRow({
+                        userKey: log.userKey || '-',
+                        action: log.action,
+                        spaceKey: log.spaceKey || '-',
+                        details: log.details || '',
+                        timestamp: log.timestamp ? new Date(log.timestamp).toLocaleString('ko-KR') : '-'
+                    }));
+                });
+                AJS.$('#ai-gen-audit-total').text(result.total);
+                AJS.$('#ai-gen-audit-prev').prop('disabled', auditOffset === 0);
+                AJS.$('#ai-gen-audit-next').prop('disabled', auditOffset + auditLimit >= result.total);
+            }
+        });
+    }
+
+    AJS.$('#ai-gen-audit-filter').on('click', function() { auditOffset = 0; loadAuditLog(); });
+    AJS.$('#ai-gen-audit-prev').on('click', function() { auditOffset = Math.max(0, auditOffset - auditLimit); loadAuditLog(); });
+    AJS.$('#ai-gen-audit-next').on('click', function() { auditOffset += auditLimit; loadAuditLog(); });
+    AJS.$('#ai-gen-usage-days').on('change', loadUsage);
+
+    loadUsage();
+    loadAuditLog();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<html>
+<head>
+    <title>AI 문서 생성 - 프롬프트 관리</title>
+    <meta name="decorator" content="atl.admin" />
+    $webResourceManager.requireResource("com.mycompany.confluence.ai-page-generation:ai-generation-admin-resources")
+</head>
+<body>
+<div id="ai-gen-admin-container" class="ai-gen-admin">
+    <!-- Navigation Tabs -->
+    <div class="aui-tabs horizontal-tabs">
+        <ul class="tabs-menu">
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a>
+            </li>
+            <li class="menu-item active-tab">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a>
+            </li>
+            <li class="menu-item">
+                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="ai-gen-panel-prompts" class="ai-gen-admin-panel">
+        <h2>프롬프트 템플릿 관리</h2>
+        <p class="description">문서 유형별 시스템 프롬프트와 섹션 프롬프트 템플릿을 커스터마이즈합니다.
+            비활성 상태이거나 정의되지 않은 템플릿은 기본 내장 프롬프트를 사용합니다.</p>
+
+        <div class="aui-message aui-message-info">
+            <p>사용 가능한 템플릿 키: <code>meeting-notes</code>, <code>design-doc</code>, <code>rfc</code>,
+               <code>incident-report</code>, <code>execution-plan</code>, <code>weekly-report</code></p>
+        </div>
+
+        <table id="ai-gen-prompt-table" class="aui">
+            <thead>
+                <tr>
+                    <th>템플릿 키</th>
+                    <th>시스템 프롬프트</th>
+                    <th>섹션 프롬프트 템플릿</th>
+                    <th>활성</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody id="ai-gen-prompt-tbody"></tbody>
+        </table>
+
+        <h3>새 프롬프트 추가</h3>
+        <form class="aui" id="ai-gen-prompt-form">
+            <div class="field-group">
+                <label for="ai-gen-prompt-key">템플릿 키<span class="aui-icon icon-required"></span></label>
+                <select id="ai-gen-prompt-key" class="select">
+                    <option value="meeting-notes">회의록 (meeting-notes)</option>
+                    <option value="design-doc">설계서 (design-doc)</option>
+                    <option value="rfc">RFC (rfc)</option>
+                    <option value="incident-report">장애 보고서 (incident-report)</option>
+                    <option value="execution-plan">실행 계획 (execution-plan)</option>
+                    <option value="weekly-report">주간 보고 (weekly-report)</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-prompt-system">시스템 프롬프트</label>
+                <textarea id="ai-gen-prompt-system" class="textarea long-field" rows="8"
+                          placeholder="AI 역할과 문서 작성 지침을 정의합니다..."></textarea>
+                <div class="description">비워두면 기본 시스템 프롬프트를 사용합니다.</div>
+            </div>
+            <div class="field-group">
+                <label for="ai-gen-prompt-section">섹션 프롬프트 템플릿</label>
+                <textarea id="ai-gen-prompt-section" class="textarea long-field" rows="6"
+                          placeholder="섹션별 생성 시 사용할 프롬프트 템플릿..."></textarea>
+                <div class="description">
+                    사용 가능한 변수: <code>{{section_title}}</code>, <code>{{purpose}}</code>,
+                    <code>{{audience}}</code>, <code>{{tone}}</code>, <code>{{context}}</code>
+                </div>
+            </div>
+            <div class="field-group">
+                <label>
+                    <input type="checkbox" id="ai-gen-prompt-active" checked/> 활성화
+                </label>
+            </div>
+            <div class="buttons-container">
+                <div class="buttons">
+                    <button type="button" id="ai-gen-add-prompt" class="aui-button aui-button-primary">프롬프트 추가</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+AJS.toInit(function() {
+    var REST_BASE = AJS.contextPath() + '/rest/ai-generation/1.0';
+
+    function loadPrompts() {
+        AJS.$.ajax({
+            url: REST_BASE + '/admin/prompts',
+            dataType: 'json',
+            success: function(prompts) {
+                var tbody = AJS.$('#ai-gen-prompt-tbody').empty();
+                AJS.$.each(prompts, function(i, p) {
+                    tbody.append('<tr data-id="' + p.id + '">' +
+                        '<td><code>' + p.templateKey + '</code></td>' +
+                        '<td class="ai-gen-prompt-preview">' + (p.systemPrompt ? p.systemPrompt.substring(0, 80) + '...' : '<em>(기본)</em>') + '</td>' +
+                        '<td class="ai-gen-prompt-preview">' + (p.sectionPromptTemplate ? p.sectionPromptTemplate.substring(0, 80) + '...' : '<em>(기본)</em>') + '</td>' +
+                        '<td>' + (p.active ? '<span class="aui-lozenge aui-lozenge-success">활성</span>' : '<span class="aui-lozenge">비활성</span>') + '</td>' +
+                        '<td><button class="aui-button aui-button-subtle ai-gen-delete-prompt" data-id="' + p.id + '"><span class="aui-icon aui-icon-small aui-iconfont-remove"></span></button></td>' +
+                        '</tr>');
+                });
+            }
+        });
+    }
+
+    AJS.$('#ai-gen-add-prompt').on('click', function() {
+        AJS.$.ajax({
+            url: REST_BASE + '/admin/prompts',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                templateKey: AJS.$('#ai-gen-prompt-key').val(),
+                systemPrompt: AJS.$('#ai-gen-prompt-system').val() || null,
+                sectionPromptTemplate: AJS.$('#ai-gen-prompt-section').val() || null,
+                active: AJS.$('#ai-gen-prompt-active').is(':checked')
+            }),
+            dataType: 'json',
+            success: function() {
+                AJS.$('#ai-gen-prompt-system, #ai-gen-prompt-section').val('');
+                loadPrompts();
+                AJS.flag({type: 'success', title: '프롬프트가 추가되었습니다.', close: 'auto'});
+            }
+        });
+    });
+
+    AJS.$(document).on('click', '.ai-gen-delete-prompt', function() {
+        var id = AJS.$(this).data('id');
+        AJS.$.ajax({url: REST_BASE + '/admin/prompts/' + id, type: 'DELETE', success: loadPrompts});
+    });
+
+    loadPrompts();
+});
+</script>
+</body>
+</html>

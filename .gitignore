@@ -1,0 +1,92 @@
+# ===========================
+# Maven Build
+# ===========================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ===========================
+# IDE - IntelliJ IDEA
+# ===========================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.shelf/
+
+# ===========================
+# IDE - Eclipse
+# ===========================
+.project
+.classpath
+.settings/
+bin/
+*.launch
+
+# ===========================
+# IDE - VS Code
+# ===========================
+.vscode/
+
+# ===========================
+# IDE - NetBeans
+# ===========================
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ===========================
+# Atlassian SDK
+# ===========================
+amps-standalone/
+home/
+test-home/
+.atlassian/
+atlassian-ide-plugin.xml
+jmx.log
+*.hprof
+
+# ===========================
+# Logs
+# ===========================
+*.log
+logs/
+
+# ===========================
+# Claude Code
+# ===========================
+.claude/
+
+# ===========================
+# Sensitive Files
+# ===========================
+*.env
+.env.*
+credentials.*
+**/secrets/
+*.pem
+*.key
+*.p12
+*.jks
