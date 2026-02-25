@@ -31,8 +31,8 @@ public interface AoAuditLog extends Entity {
     void setDetails(String details);
 
     @Indexed
-    Date getTimestamp();
-    void setTimestamp(Date timestamp);
+    Date getCreatedAt();
+    void setCreatedAt(Date createdAt);
 
     String getNodeId();
     void setNodeId(String nodeId);

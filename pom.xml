@@ -6,7 +6,7 @@
 
     <groupId>com.koreacb.confluence</groupId>
     <artifactId>ai-page-generation</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>atlassian-plugin</packaging>
 
     <name>Expert Document Page AI Generation</name>

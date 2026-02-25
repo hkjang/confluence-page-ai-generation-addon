@@ -1,5 +1,7 @@
 package com.koreacb.confluence.aigeneration.service.impl;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.koreacb.confluence.aigeneration.model.AdminConfig;
 import com.koreacb.confluence.aigeneration.service.AdminConfigService;
 import com.koreacb.confluence.aigeneration.service.EncryptionService;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+@ExportAsService({AdminConfigService.class})
 @Named("adminConfigService")
 public class BandanaAdminConfigService implements AdminConfigService {
     private static final Logger LOG = LoggerFactory.getLogger(BandanaAdminConfigService.class);
@@ -20,7 +23,7 @@ public class BandanaAdminConfigService implements AdminConfigService {
     private final EncryptionService encryptionService;
 
     @Inject
-    public BandanaAdminConfigService(PluginSettingsFactory pluginSettingsFactory,
+    public BandanaAdminConfigService(@ComponentImport PluginSettingsFactory pluginSettingsFactory,
                                      EncryptionService encryptionService) {
         this.pluginSettingsFactory = pluginSettingsFactory;
         this.encryptionService = encryptionService;

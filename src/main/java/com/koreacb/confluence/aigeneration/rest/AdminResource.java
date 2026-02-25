@@ -337,7 +337,7 @@ public class AdminResource {
             item.put("spaceKey", log.getSpaceKey());
             item.put("pageId", log.getPageId());
             item.put("details", log.getDetails());
-            item.put("timestamp", log.getTimestamp() != null ? log.getTimestamp().getTime() : null);
+            item.put("timestamp", log.getCreatedAt() != null ? log.getCreatedAt().getTime() : null);
             item.put("nodeId", log.getNodeId());
             items.add(item);
         }

@@ -26,7 +26,7 @@ public class ActiveObjectsAuditService implements AuditService {
             AoAuditLog e = ao.create(AoAuditLog.class);
             e.setUserKey(userKey); e.setAction(action); e.setSpaceKey(spaceKey);
             e.setPageId(pageId); e.setDetails(LogMasker.truncateContent(details));
-            e.setTimestamp(new Date()); e.save();
+            e.setCreatedAt(new Date()); e.save();
         } catch (Exception e) { LOG.error("Audit log failed: {}", action, e); }
     }
 
@@ -38,10 +38,10 @@ public class ActiveObjectsAuditService implements AuditService {
         if (userKey != null) { w.append(" AND USER_KEY = ?"); p.add(userKey); }
         if (spaceKey != null) { w.append(" AND SPACE_KEY = ?"); p.add(spaceKey); }
         if (action != null) { w.append(" AND ACTION = ?"); p.add(action); }
-        if (from != null) { w.append(" AND TIMESTAMP >= ?"); p.add(from); }
-        if (to != null) { w.append(" AND TIMESTAMP <= ?"); p.add(to); }
+        if (from != null) { w.append(" AND CREATED_AT >= ?"); p.add(from); }
+        if (to != null) { w.append(" AND CREATED_AT <= ?"); p.add(to); }
         return Arrays.asList(ao.find(AoAuditLog.class,
-                Query.select().where(w.toString(), p.toArray()).order("TIMESTAMP DESC").offset(offset).limit(limit)));
+                Query.select().where(w.toString(), p.toArray()).order("CREATED_AT DESC").offset(offset).limit(limit)));
     }
 
     @Override
@@ -51,15 +51,15 @@ public class ActiveObjectsAuditService implements AuditService {
         if (userKey != null) { w.append(" AND USER_KEY = ?"); p.add(userKey); }
         if (spaceKey != null) { w.append(" AND SPACE_KEY = ?"); p.add(spaceKey); }
         if (action != null) { w.append(" AND ACTION = ?"); p.add(action); }
-        if (from != null) { w.append(" AND TIMESTAMP >= ?"); p.add(from); }
-        if (to != null) { w.append(" AND TIMESTAMP <= ?"); p.add(to); }
+        if (from != null) { w.append(" AND CREATED_AT >= ?"); p.add(from); }
+        if (to != null) { w.append(" AND CREATED_AT <= ?"); p.add(to); }
         return ao.count(AoAuditLog.class, Query.select().where(w.toString(), p.toArray()));
     }
 
     @Override
     public void cleanupOldEntries(int retentionDays) {
         Calendar c = Calendar.getInstance(); c.add(Calendar.DAY_OF_MONTH, -retentionDays);
-        AoAuditLog[] old = ao.find(AoAuditLog.class, Query.select().where("TIMESTAMP < ?", c.getTime()));
+        AoAuditLog[] old = ao.find(AoAuditLog.class, Query.select().where("CREATED_AT < ?", c.getTime()));
         for (AoAuditLog e : old) ao.delete(e);
         if (old.length > 0) LOG.info("Cleaned {} audit entries", old.length);
     }

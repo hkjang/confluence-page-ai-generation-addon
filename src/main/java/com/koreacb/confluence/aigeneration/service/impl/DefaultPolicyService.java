@@ -1,6 +1,8 @@
 package com.koreacb.confluence.aigeneration.service.impl;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.google.gson.Gson;
 import com.koreacb.confluence.aigeneration.ao.AoSpacePolicy;
 import com.koreacb.confluence.aigeneration.security.PermissionChecker;
@@ -16,6 +18,7 @@ import javax.inject.Named;
 import java.util.Arrays;
 import java.util.List;
 
+@ExportAsService({PolicyService.class})
 @Named("policyService")
 public class DefaultPolicyService implements PolicyService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPolicyService.class);
@@ -26,7 +29,7 @@ public class DefaultPolicyService implements PolicyService {
     private final Gson gson = new Gson();
 
     @Inject
-    public DefaultPolicyService(ActiveObjects ao, AdminConfigService configService,
+    public DefaultPolicyService(@ComponentImport ActiveObjects ao, AdminConfigService configService,
                                 UsageTrackingService usageService, PermissionChecker permChecker) {
         this.ao = ao; this.configService = configService;
         this.usageService = usageService; this.permChecker = permChecker;
