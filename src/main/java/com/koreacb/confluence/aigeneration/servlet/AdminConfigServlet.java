@@ -1,9 +1,8 @@
 package com.koreacb.confluence.aigeneration.servlet;
 
-import com.atlassian.sal.api.auth.LoginUriProvider;
-import com.atlassian.sal.api.component.ComponentLocator;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.confluence.security.PermissionManager;
+import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
+import com.atlassian.confluence.user.ConfluenceUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -23,8 +22,13 @@ import java.nio.charset.StandardCharsets;
  *
  * IMPORTANT: This servlet is declared in atlassian-plugin.xml and instantiated
  * by Confluence's HOST Spring context (DefaultSpringContainerAccessor), NOT by
- * the plugin's own Spring Scanner context. Therefore @ComponentImport and @Inject
- * do NOT work here. We must use ComponentLocator for runtime OSGi service lookup.
+ * the plugin's own Spring Scanner context. Therefore @ComponentImport, @Inject,
+ * and ComponentLocator for SAL services do NOT work here.
+ *
+ * Instead, we use Confluence's native APIs:
+ *   - AuthenticatedUserThreadLocal for current user (always available in Confluence web context)
+ *   - PermissionManager via ContainerManager for admin check
+ *   - Standard Confluence login URL for redirect
  *
  * Routes:
  *   /config  - General settings (vLLM endpoint, model, API key, defaults)
@@ -35,35 +39,19 @@ import java.nio.charset.StandardCharsets;
 public class AdminConfigServlet extends HttpServlet {
     private static final Logger LOG = LoggerFactory.getLogger(AdminConfigServlet.class);
 
-    private UserManager getUserManager() {
-        return ComponentLocator.getComponent(UserManager.class);
-    }
-
-    private LoginUriProvider getLoginUriProvider() {
-        return ComponentLocator.getComponent(LoginUriProvider.class);
-    }
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        UserManager userManager = getUserManager();
-        if (userManager == null) {
-            LOG.error("UserManager not available via ComponentLocator");
-            resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "Plugin services not yet available. Please try again shortly.");
-            return;
-        }
-
-        // Check authentication
-        UserProfile user = userManager.getRemoteUser(req);
+        // Use Confluence's thread-local user (set by Confluence's authentication filters)
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) {
             redirectToLogin(req, resp);
             return;
         }
 
-        // Check admin permission
-        if (!userManager.isSystemAdmin(user.getUserKey())) {
+        // Check admin permission using Confluence's PermissionManager
+        if (!isConfluenceAdmin(user)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN, "System admin access required");
             return;
         }
@@ -132,16 +120,50 @@ public class AdminConfigServlet extends HttpServlet {
                 "Use REST API for configuration changes");
     }
 
+    /**
+     * Check if the user is a Confluence system administrator.
+     * Uses ContainerManager to get PermissionManager from Confluence's host context.
+     */
+    private boolean isConfluenceAdmin(ConfluenceUser user) {
+        try {
+            PermissionManager pm = (PermissionManager)
+                    com.atlassian.spring.container.ContainerManager.getComponent("permissionManager");
+            if (pm != null) {
+                return pm.isConfluenceAdministrator(user);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to check admin via ContainerManager, trying ContainerContext", e);
+        }
+
+        // Fallback: try via ContainerContext
+        try {
+            Object ctx = com.atlassian.spring.container.ContainerManager.getInstance().getContainerContext();
+            if (ctx != null) {
+                Object pm = ((com.atlassian.spring.container.ContainerContext) ctx).getComponent("permissionManager");
+                if (pm instanceof PermissionManager) {
+                    return ((PermissionManager) pm).isConfluenceAdministrator(user);
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to check admin permission via all methods", e);
+        }
+
+        return false;
+    }
+
+    /**
+     * Redirect to Confluence's standard login page.
+     * Uses the standard /login.action URL with os_destination for return URL.
+     */
     private void redirectToLogin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
-        LoginUriProvider loginUriProvider = getLoginUriProvider();
-        if (loginUriProvider == null) {
-            LOG.error("LoginUriProvider not available via ComponentLocator");
-            resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "Plugin services not yet available. Please try again shortly.");
-            return;
+        String destination = req.getRequestURI();
+        String queryString = req.getQueryString();
+        if (queryString != null && !queryString.isEmpty()) {
+            destination += "?" + queryString;
         }
-        URI currentUri = URI.create(req.getRequestURL().toString());
-        resp.sendRedirect(loginUriProvider.getLoginUri(currentUri).toASCIIString());
+        String loginUrl = req.getContextPath() + "/login.action?os_destination="
+                + URLEncoder.encode(destination, "UTF-8");
+        resp.sendRedirect(loginUrl);
     }
 }
