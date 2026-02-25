@@ -1,14 +1,12 @@
 package com.koreacb.confluence.aigeneration.servlet;
 
 import com.atlassian.sal.api.auth.LoginUriProvider;
+import com.atlassian.sal.api.component.ComponentLocator;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -21,30 +19,41 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Admin servlet serving Velocity templates for plugin configuration.
+ * Admin servlet serving templates for plugin configuration.
+ *
+ * IMPORTANT: This servlet is declared in atlassian-plugin.xml and instantiated
+ * by Confluence's HOST Spring context (DefaultSpringContainerAccessor), NOT by
+ * the plugin's own Spring Scanner context. Therefore @ComponentImport and @Inject
+ * do NOT work here. We must use ComponentLocator for runtime OSGi service lookup.
+ *
  * Routes:
  *   /config  - General settings (vLLM endpoint, model, API key, defaults)
  *   /prompts - Prompt template management
  *   /policies - Space policy management
  *   /audit   - Audit log viewer
  */
-@Named
 public class AdminConfigServlet extends HttpServlet {
     private static final Logger LOG = LoggerFactory.getLogger(AdminConfigServlet.class);
 
-    private final UserManager userManager;
-    private final LoginUriProvider loginUriProvider;
+    private UserManager getUserManager() {
+        return ComponentLocator.getComponent(UserManager.class);
+    }
 
-    @Inject
-    public AdminConfigServlet(@ComponentImport UserManager userManager,
-                              @ComponentImport LoginUriProvider loginUriProvider) {
-        this.userManager = userManager;
-        this.loginUriProvider = loginUriProvider;
+    private LoginUriProvider getLoginUriProvider() {
+        return ComponentLocator.getComponent(LoginUriProvider.class);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
+        UserManager userManager = getUserManager();
+        if (userManager == null) {
+            LOG.error("UserManager not available via ComponentLocator");
+            resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                    "Plugin services not yet available. Please try again shortly.");
+            return;
+        }
 
         // Check authentication
         UserProfile user = userManager.getRemoteUser(req);
@@ -125,6 +134,13 @@ public class AdminConfigServlet extends HttpServlet {
 
     private void redirectToLogin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
+        LoginUriProvider loginUriProvider = getLoginUriProvider();
+        if (loginUriProvider == null) {
+            LOG.error("LoginUriProvider not available via ComponentLocator");
+            resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                    "Plugin services not yet available. Please try again shortly.");
+            return;
+        }
         URI currentUri = URI.create(req.getRequestURL().toString());
         resp.sendRedirect(loginUriProvider.getLoginUri(currentUri).toASCIIString());
     }
