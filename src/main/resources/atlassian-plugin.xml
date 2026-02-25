@@ -5,7 +5,7 @@
     <plugin-info>
         <description>AI-powered expert document page generation for Confluence Server.
             Generates professional documents with templates, quality checks, and section-by-section AI generation.</description>
-        <version>1.0.0</version>
+        <version>${project.version}</version>
         <vendor name="KoreaCB" url="https://koreacb.com"/>
         <param name="plugin-icon">images/plugin-icon.svg</param>
         <param name="plugin-logo">images/plugin-icon.svg</param>

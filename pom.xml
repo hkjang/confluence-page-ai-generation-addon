@@ -6,7 +6,7 @@
 
     <groupId>com.koreacb.confluence</groupId>
     <artifactId>ai-page-generation</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <packaging>atlassian-plugin</packaging>
 
     <name>Expert Document Page AI Generation</name>
@@ -234,13 +234,13 @@
                             com.koreacb.confluence.aigeneration.api,
                         </Export-Package>
                         <Import-Package>
-                            com.atlassian.confluence.*;resolution:=optional,
-                            com.atlassian.activeobjects.*;resolution:=optional,
-                            net.java.ao.*;resolution:=optional,
-                            com.atlassian.sal.api.*;resolution:=optional,
-                            com.atlassian.plugin.*;resolution:=optional,
+                            com.atlassian.confluence.*,
+                            com.atlassian.activeobjects.*,
+                            net.java.ao.*,
+                            com.atlassian.sal.api.*,
+                            com.atlassian.plugin.*,
                             com.atlassian.plugins.rest.*;resolution:=optional,
-                            com.atlassian.scheduler.*;resolution:=optional,
+                            com.atlassian.scheduler.*,
                             com.atlassian.event.*;resolution:=optional,
                             com.atlassian.user.*;resolution:=optional,
                             javax.inject,
@@ -253,7 +253,8 @@
                             org.slf4j.*,
                             *;resolution:=optional
                         </Import-Package>
-                        <Spring-Context>*</Spring-Context>
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                        <Spring-Context>*;timeout:=60</Spring-Context>
                     </instructions>
                 </configuration>
             </plugin>
