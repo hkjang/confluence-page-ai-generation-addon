@@ -1,12 +1,11 @@
 package com.koreacb.confluence.aigeneration.rest;
 
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
+import com.atlassian.confluence.user.ConfluenceUser;
+import com.atlassian.sal.api.component.ComponentLocator;
 import com.koreacb.confluence.aigeneration.model.*;
 import com.koreacb.confluence.aigeneration.service.AiGenerationService;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -17,7 +16,7 @@ import java.util.*;
 
 /**
  * REST resource for AI generation operations.
- * Endpoints: start, status, progress, result, cancel, retry
+ * Uses ComponentLocator for service lookups to avoid Spring context isolation issues.
  */
 @Path("/generation")
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,26 +24,22 @@ import java.util.*;
 @Named
 public class GenerationResource {
 
-    private final AiGenerationService generationService;
-    private final UserManager userManager;
+    private AiGenerationService generationService;
 
-    @Inject
-    public GenerationResource(AiGenerationService generationService, @ComponentImport UserManager userManager) {
-        this.generationService = generationService;
-        this.userManager = userManager;
+    private void init() {
+        if (generationService != null) return;
+        generationService = ComponentLocator.getComponent(AiGenerationService.class);
     }
 
-    /**
-     * Start a new generation job.
-     */
     @POST
     @Path("/start")
     public Response startGeneration(GenerationRequest request, @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         try {
-            String jobId = generationService.submitGenerationJob(request, user.getUserKey().getStringValue());
+            String jobId = generationService.submitGenerationJob(request, user.getName());
             Map<String, String> result = new HashMap<>();
             result.put("jobId", jobId);
             result.put("status", "QUEUED");
@@ -56,20 +51,18 @@ public class GenerationResource {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(errorMap(e.getMessage())).build();
         } catch (IllegalStateException e) {
-            return Response.status(429) // Too Many Requests
+            return Response.status(429)
                     .entity(errorMap(e.getMessage())).build();
         } catch (Exception e) {
             return serverError(e);
         }
     }
 
-    /**
-     * Get the status of a generation job.
-     */
     @GET
     @Path("/status/{jobId}")
     public Response getStatus(@PathParam("jobId") String jobId, @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         JobStatus status = generationService.getJobStatus(jobId);
@@ -82,13 +75,11 @@ public class GenerationResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Get the progress of a generation job (0.0 to 1.0).
-     */
     @GET
     @Path("/progress/{jobId}")
     public Response getProgress(@PathParam("jobId") String jobId, @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         double progress = generationService.getJobProgress(jobId);
@@ -103,13 +94,11 @@ public class GenerationResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Get the full result of a completed generation job.
-     */
     @GET
     @Path("/result/{jobId}")
     public Response getResult(@PathParam("jobId") String jobId, @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         GenerationResult result = generationService.getJobResult(jobId);
@@ -118,17 +107,15 @@ public class GenerationResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Cancel a running generation job.
-     */
     @POST
     @Path("/cancel/{jobId}")
     public Response cancelJob(@PathParam("jobId") String jobId, @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         try {
-            generationService.cancelJob(jobId, user.getUserKey().getStringValue());
+            generationService.cancelJob(jobId, user.getName());
             Map<String, String> result = new HashMap<>();
             result.put("jobId", jobId);
             result.put("status", "CANCELLED");
@@ -143,15 +130,13 @@ public class GenerationResource {
         }
     }
 
-    /**
-     * Retry a failed generation job.
-     */
     @POST
     @Path("/retry/{jobId}")
     public Response retryJob(@PathParam("jobId") String jobId,
                              @QueryParam("sections") String sections,
                              @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         try {
@@ -161,7 +146,7 @@ public class GenerationResource {
             }
 
             String newJobId = generationService.retryJob(
-                    jobId, user.getUserKey().getStringValue(), sectionKeys);
+                    jobId, user.getName(), sectionKeys);
 
             Map<String, String> result = new HashMap<>();
             result.put("jobId", newJobId);

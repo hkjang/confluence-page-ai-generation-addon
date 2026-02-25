@@ -19,11 +19,13 @@ import com.koreacb.confluence.aigeneration.util.ContentTruncator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
 
+@ExportAsService({ContextBuilderService.class})
 @Named("contextBuilderService")
 public class DefaultContextBuilderService implements ContextBuilderService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultContextBuilderService.class);

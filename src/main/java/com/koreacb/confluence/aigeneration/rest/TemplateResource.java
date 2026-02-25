@@ -1,12 +1,11 @@
 package com.koreacb.confluence.aigeneration.rest;
 
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
+import com.atlassian.confluence.user.ConfluenceUser;
+import com.atlassian.sal.api.component.ComponentLocator;
 import com.koreacb.confluence.aigeneration.model.DocumentTemplate;
 import com.koreacb.confluence.aigeneration.service.TemplateRegistryService;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -17,29 +16,25 @@ import java.util.*;
 
 /**
  * REST resource for document template operations.
- * Provides template listing and details.
+ * Uses ComponentLocator for service lookups to avoid Spring context isolation issues.
  */
 @Path("/templates")
 @Produces(MediaType.APPLICATION_JSON)
 @Named
 public class TemplateResource {
 
-    private final TemplateRegistryService templateService;
-    private final UserManager userManager;
+    private TemplateRegistryService templateService;
 
-    @Inject
-    public TemplateResource(TemplateRegistryService templateService, @ComponentImport UserManager userManager) {
-        this.templateService = templateService;
-        this.userManager = userManager;
+    private void init() {
+        if (templateService != null) return;
+        templateService = ComponentLocator.getComponent(TemplateRegistryService.class);
     }
 
-    /**
-     * List all available templates, optionally filtered by space.
-     */
     @GET
     public Response listTemplates(@QueryParam("spaceKey") String spaceKey,
                                   @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         List<DocumentTemplate> templates;
@@ -65,14 +60,12 @@ public class TemplateResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Get detailed template information including sections.
-     */
     @GET
     @Path("/{templateKey}")
     public Response getTemplate(@PathParam("templateKey") String templateKey,
                                 @Context HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
         if (user == null) return unauthorized();
 
         DocumentTemplate template = templateService.getTemplate(templateKey);

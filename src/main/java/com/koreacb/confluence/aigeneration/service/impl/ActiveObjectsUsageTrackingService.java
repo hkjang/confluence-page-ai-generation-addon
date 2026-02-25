@@ -7,11 +7,13 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
 
+@ExportAsService({UsageTrackingService.class})
 @Named("usageTrackingService")
 public class ActiveObjectsUsageTrackingService implements UsageTrackingService {
     private static final Logger LOG = LoggerFactory.getLogger(ActiveObjectsUsageTrackingService.class);

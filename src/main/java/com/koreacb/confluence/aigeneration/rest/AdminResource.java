@@ -1,16 +1,17 @@
 package com.koreacb.confluence.aigeneration.rest;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.confluence.security.PermissionManager;
+import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
+import com.atlassian.confluence.user.ConfluenceUser;
+import com.atlassian.sal.api.component.ComponentLocator;
+import com.atlassian.spring.container.ContainerManager;
 import com.google.gson.Gson;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.koreacb.confluence.aigeneration.ao.*;
 import com.koreacb.confluence.aigeneration.model.AdminConfig;
 import com.koreacb.confluence.aigeneration.service.*;
 import net.java.ao.Query;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -21,7 +22,7 @@ import java.util.*;
 
 /**
  * REST resource for admin CRUD operations.
- * Handles: config, prompts, glossary, forbidden words, policies, audit, usage.
+ * Uses ComponentLocator for service lookups to avoid Spring context isolation issues.
  */
 @Path("/admin")
 @Produces(MediaType.APPLICATION_JSON)
@@ -29,24 +30,20 @@ import java.util.*;
 @Named
 public class AdminResource {
 
-    private final AdminConfigService adminConfigService;
-    private final PolicyService policyService;
-    private final AuditService auditService;
-    private final UsageTrackingService usageTracking;
-    private final UserManager userManager;
-    private final ActiveObjects ao;
+    private AdminConfigService adminConfigService;
+    private PolicyService policyService;
+    private AuditService auditService;
+    private UsageTrackingService usageTracking;
+    private ActiveObjects ao;
     private final Gson gson = new Gson();
 
-    @Inject
-    public AdminResource(AdminConfigService adminConfigService, PolicyService policyService,
-                         AuditService auditService, UsageTrackingService usageTracking,
-                         @ComponentImport UserManager userManager, @ComponentImport ActiveObjects ao) {
-        this.adminConfigService = adminConfigService;
-        this.policyService = policyService;
-        this.auditService = auditService;
-        this.usageTracking = usageTracking;
-        this.userManager = userManager;
-        this.ao = ao;
+    private void init() {
+        if (adminConfigService != null) return;
+        adminConfigService = ComponentLocator.getComponent(AdminConfigService.class);
+        policyService = ComponentLocator.getComponent(PolicyService.class);
+        auditService = ComponentLocator.getComponent(AuditService.class);
+        usageTracking = ComponentLocator.getComponent(UsageTrackingService.class);
+        ao = ComponentLocator.getComponent(ActiveObjects.class);
     }
 
     // ─────────────── Config ───────────────
@@ -54,29 +51,32 @@ public class AdminResource {
     @GET
     @Path("/config")
     public Response getConfig(@Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         return Response.ok(adminConfigService.getConfig()).build();
     }
 
     @PUT
     @Path("/config")
     public Response saveConfig(AdminConfig config, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         adminConfigService.saveConfig(config);
-        auditAdmin(httpReq, "CONFIG_UPDATED", "Admin config updated");
+        auditAdmin("CONFIG_UPDATED", "Admin config updated");
         return Response.ok(adminConfigService.getConfig()).build();
     }
 
     @PUT
     @Path("/config/apikey")
     public Response saveApiKey(Map<String, String> body, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         String apiKey = body.get("apiKey");
         if (apiKey == null || apiKey.trim().isEmpty()) {
             return badRequest("apiKey is required");
         }
         adminConfigService.saveApiKey(apiKey);
-        auditAdmin(httpReq, "API_KEY_UPDATED", "API key updated");
+        auditAdmin("API_KEY_UPDATED", "API key updated");
         Map<String, Boolean> resp = new HashMap<>();
         resp.put("saved", true);
         return Response.ok(resp).build();
@@ -87,7 +87,8 @@ public class AdminResource {
     @GET
     @Path("/prompts")
     public Response listPrompts(@Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoPromptTemplate[] prompts = ao.find(AoPromptTemplate.class, Query.select().order("TEMPLATE_KEY ASC"));
         List<Map<String, Object>> result = new ArrayList<>();
         for (AoPromptTemplate p : prompts) {
@@ -105,14 +106,15 @@ public class AdminResource {
     @POST
     @Path("/prompts")
     public Response createPrompt(Map<String, Object> body, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoPromptTemplate p = ao.create(AoPromptTemplate.class);
         p.setTemplateKey((String) body.get("templateKey"));
         p.setSystemPrompt((String) body.get("systemPrompt"));
         p.setSectionPrompts((String) body.get("sectionPrompts"));
         p.setActive(body.get("active") != null && (Boolean) body.get("active"));
         p.save();
-        auditAdmin(httpReq, "PROMPT_CREATED", "templateKey=" + body.get("templateKey"));
+        auditAdmin("PROMPT_CREATED", "templateKey=" + body.get("templateKey"));
         return Response.ok(idMap(p.getID())).build();
     }
 
@@ -120,25 +122,27 @@ public class AdminResource {
     @Path("/prompts/{id}")
     public Response updatePrompt(@PathParam("id") int id, Map<String, Object> body,
                                  @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoPromptTemplate p = ao.get(AoPromptTemplate.class, id);
         if (p == null) return notFound("Prompt not found");
         if (body.containsKey("systemPrompt")) p.setSystemPrompt((String) body.get("systemPrompt"));
         if (body.containsKey("sectionPrompts")) p.setSectionPrompts((String) body.get("sectionPrompts"));
         if (body.containsKey("active")) p.setActive((Boolean) body.get("active"));
         p.save();
-        auditAdmin(httpReq, "PROMPT_UPDATED", "id=" + id);
+        auditAdmin("PROMPT_UPDATED", "id=" + id);
         return Response.ok(successMap()).build();
     }
 
     @DELETE
     @Path("/prompts/{id}")
     public Response deletePrompt(@PathParam("id") int id, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoPromptTemplate p = ao.get(AoPromptTemplate.class, id);
         if (p == null) return notFound("Prompt not found");
         ao.delete(p);
-        auditAdmin(httpReq, "PROMPT_DELETED", "id=" + id);
+        auditAdmin("PROMPT_DELETED", "id=" + id);
         return Response.ok(successMap()).build();
     }
 
@@ -148,7 +152,8 @@ public class AdminResource {
     @Path("/glossary")
     public Response listGlossary(@QueryParam("spaceKey") String spaceKey,
                                  @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoGlossaryTerm[] terms;
         if (spaceKey != null && !spaceKey.isEmpty()) {
             terms = ao.find(AoGlossaryTerm.class, Query.select().where("SPACE_KEY = ?", spaceKey));
@@ -170,13 +175,14 @@ public class AdminResource {
     @POST
     @Path("/glossary")
     public Response createGlossaryTerm(Map<String, String> body, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoGlossaryTerm t = ao.create(AoGlossaryTerm.class);
         t.setTerm(body.get("term"));
         t.setDefinition(body.get("definition"));
         t.setSpaceKey(body.get("spaceKey"));
         t.save();
-        auditAdmin(httpReq, "GLOSSARY_CREATED", "term=" + body.get("term"));
+        auditAdmin("GLOSSARY_CREATED", "term=" + body.get("term"));
         return Response.ok(idMap(t.getID())).build();
     }
 
@@ -184,7 +190,8 @@ public class AdminResource {
     @Path("/glossary/{id}")
     public Response updateGlossaryTerm(@PathParam("id") int id, Map<String, String> body,
                                        @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoGlossaryTerm t = ao.get(AoGlossaryTerm.class, id);
         if (t == null) return notFound("Term not found");
         if (body.containsKey("term")) t.setTerm(body.get("term"));
@@ -197,7 +204,8 @@ public class AdminResource {
     @DELETE
     @Path("/glossary/{id}")
     public Response deleteGlossaryTerm(@PathParam("id") int id, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoGlossaryTerm t = ao.get(AoGlossaryTerm.class, id);
         if (t == null) return notFound("Term not found");
         ao.delete(t);
@@ -210,7 +218,8 @@ public class AdminResource {
     @Path("/forbidden-words")
     public Response listForbiddenWords(@QueryParam("spaceKey") String spaceKey,
                                        @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoForbiddenWord[] words;
         if (spaceKey != null && !spaceKey.isEmpty()) {
             words = ao.find(AoForbiddenWord.class, Query.select().where("SPACE_KEY = ?", spaceKey));
@@ -233,21 +242,23 @@ public class AdminResource {
     @POST
     @Path("/forbidden-words")
     public Response createForbiddenWord(Map<String, Object> body, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoForbiddenWord w = ao.create(AoForbiddenWord.class);
         w.setPattern((String) body.get("pattern"));
         w.setReplacement((String) body.get("replacement"));
         w.setRegex(body.get("isRegex") != null && (Boolean) body.get("isRegex"));
         w.setSpaceKey((String) body.get("spaceKey"));
         w.save();
-        auditAdmin(httpReq, "FORBIDDEN_CREATED", "pattern=" + body.get("pattern"));
+        auditAdmin("FORBIDDEN_CREATED", "pattern=" + body.get("pattern"));
         return Response.ok(idMap(w.getID())).build();
     }
 
     @DELETE
     @Path("/forbidden-words/{id}")
     public Response deleteForbiddenWord(@PathParam("id") int id, @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoForbiddenWord w = ao.get(AoForbiddenWord.class, id);
         if (w == null) return notFound("Word not found");
         ao.delete(w);
@@ -259,7 +270,8 @@ public class AdminResource {
     @GET
     @Path("/policies")
     public Response listPolicies(@Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         List<AoSpacePolicy> policies = policyService.getAllPolicies();
         List<Map<String, Object>> result = new ArrayList<>();
         for (AoSpacePolicy p : policies) {
@@ -272,7 +284,8 @@ public class AdminResource {
     @Path("/policies/{spaceKey}")
     public Response getPolicy(@PathParam("spaceKey") String spaceKey,
                               @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoSpacePolicy p = policyService.getSpacePolicy(spaceKey);
         if (p == null) return notFound("Policy not found for space: " + spaceKey);
         return Response.ok(policyToMap(p)).build();
@@ -282,7 +295,8 @@ public class AdminResource {
     @Path("/policies/{spaceKey}")
     public Response savePolicy(@PathParam("spaceKey") String spaceKey, Map<String, Object> body,
                                @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
 
         AoSpacePolicy p = policyService.getSpacePolicy(spaceKey);
         if (p == null) {
@@ -296,7 +310,7 @@ public class AdminResource {
         if (body.containsKey("enabled")) p.setEnabled((Boolean) body.get("enabled"));
         p.save();
 
-        auditAdmin(httpReq, "POLICY_SAVED", "spaceKey=" + spaceKey);
+        auditAdmin("POLICY_SAVED", "spaceKey=" + spaceKey);
         return Response.ok(policyToMap(p)).build();
     }
 
@@ -304,11 +318,12 @@ public class AdminResource {
     @Path("/policies/{spaceKey}")
     public Response deletePolicy(@PathParam("spaceKey") String spaceKey,
                                  @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
         AoSpacePolicy p = policyService.getSpacePolicy(spaceKey);
         if (p != null) {
             ao.delete(p);
-            auditAdmin(httpReq, "POLICY_DELETED", "spaceKey=" + spaceKey);
+            auditAdmin("POLICY_DELETED", "spaceKey=" + spaceKey);
         }
         return Response.ok(successMap()).build();
     }
@@ -323,9 +338,9 @@ public class AdminResource {
                                 @QueryParam("offset") @DefaultValue("0") int offset,
                                 @QueryParam("limit") @DefaultValue("50") int limit,
                                 @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
 
-        // Pass null for date range (query all)
         List<AoAuditLog> logs = auditService.queryAuditLog(userKey, spaceKey, action, null, null, offset, limit);
         int total = auditService.getAuditLogCount(userKey, spaceKey, action, null, null);
 
@@ -357,9 +372,9 @@ public class AdminResource {
     @Path("/usage")
     public Response getUsageSummary(@QueryParam("days") @DefaultValue("7") int days,
                                     @Context HttpServletRequest httpReq) {
-        if (!isAdmin(httpReq)) return forbidden();
+        init();
+        if (!isAdmin()) return forbidden();
 
-        // Calculate date range from days parameter
         Calendar cal = Calendar.getInstance();
         Date to = cal.getTime();
         cal.add(Calendar.DAY_OF_MONTH, -days);
@@ -371,15 +386,19 @@ public class AdminResource {
 
     // ─────────────── Helpers ───────────────
 
-    private boolean isAdmin(HttpServletRequest httpReq) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
-        return user != null && userManager.isSystemAdmin(user.getUserKey());
+    private boolean isAdmin() {
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
+        if (user == null) return false;
+        try {
+            PermissionManager pm = (PermissionManager) ContainerManager.getComponent("permissionManager");
+            return pm != null && pm.isConfluenceAdministrator(user);
+        } catch (Exception e) { return false; }
     }
 
-    private void auditAdmin(HttpServletRequest httpReq, String action, String details) {
-        UserProfile user = userManager.getRemoteUser(httpReq);
-        if (user != null) {
-            auditService.logAction(user.getUserKey().getStringValue(), action, null, 0, details);
+    private void auditAdmin(String action, String details) {
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
+        if (user != null && auditService != null) {
+            auditService.logAction(user.getName(), action, null, 0, details);
         }
     }
 

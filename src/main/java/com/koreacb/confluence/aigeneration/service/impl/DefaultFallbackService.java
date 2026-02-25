@@ -3,10 +3,12 @@ package com.koreacb.confluence.aigeneration.service.impl;
 import com.koreacb.confluence.aigeneration.model.*;
 import com.koreacb.confluence.aigeneration.service.FallbackService;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 
+@ExportAsService({FallbackService.class})
 @Named("fallbackService")
 public class DefaultFallbackService implements FallbackService {
     @Override

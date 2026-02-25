@@ -8,12 +8,14 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Calendar;
 import java.util.Date;
 
+@ExportAsService({JobQueueService.class})
 @Named("jobQueueService")
 public class ActiveObjectsJobQueueService implements JobQueueService {
     private static final Logger LOG = LoggerFactory.getLogger(ActiveObjectsJobQueueService.class);

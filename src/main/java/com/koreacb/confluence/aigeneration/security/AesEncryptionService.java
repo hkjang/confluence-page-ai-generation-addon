@@ -12,6 +12,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,6 +23,7 @@ import java.security.spec.KeySpec;
 import java.util.Base64;
 import java.util.UUID;
 
+@ExportAsService({EncryptionService.class})
 @Named("encryptionService")
 public class AesEncryptionService implements EncryptionService {
     private static final Logger LOG = LoggerFactory.getLogger(AesEncryptionService.class);

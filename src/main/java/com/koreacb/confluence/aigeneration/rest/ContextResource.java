@@ -1,7 +1,6 @@
 package com.koreacb.confluence.aigeneration.rest;
 
 import com.atlassian.confluence.labels.Label;
-import com.atlassian.confluence.labels.LabelManager;
 import com.atlassian.confluence.pages.Attachment;
 import com.atlassian.confluence.pages.AttachmentManager;
 import com.atlassian.confluence.pages.Page;
@@ -10,13 +9,10 @@ import com.atlassian.confluence.security.Permission;
 import com.atlassian.confluence.security.PermissionManager;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
+import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
-import com.atlassian.confluence.user.UserAccessor;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.spring.container.ContainerManager;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -27,53 +23,39 @@ import java.util.*;
 
 /**
  * REST resource for context data retrieval.
- * Provides pages, attachments, and labels filtered by user permissions.
+ * Uses ContainerManager for Confluence service lookups to avoid Spring context isolation issues.
  */
 @Path("/context")
 @Produces(MediaType.APPLICATION_JSON)
 @Named
 public class ContextResource {
 
-    private final PageManager pageManager;
-    private final SpaceManager spaceManager;
-    private final AttachmentManager attachmentManager;
-    private final LabelManager labelManager;
-    private final PermissionManager permissionManager;
-    private final UserAccessor userAccessor;
-    private final UserManager userManager;
+    private PageManager pageManager;
+    private SpaceManager spaceManager;
+    private AttachmentManager attachmentManager;
+    private PermissionManager permissionManager;
 
-    @Inject
-    public ContextResource(@ComponentImport PageManager pageManager, @ComponentImport SpaceManager spaceManager,
-                           @ComponentImport AttachmentManager attachmentManager, @ComponentImport LabelManager labelManager,
-                           @ComponentImport PermissionManager permissionManager, @ComponentImport UserAccessor userAccessor,
-                           @ComponentImport UserManager userManager) {
-        this.pageManager = pageManager;
-        this.spaceManager = spaceManager;
-        this.attachmentManager = attachmentManager;
-        this.labelManager = labelManager;
-        this.permissionManager = permissionManager;
-        this.userAccessor = userAccessor;
-        this.userManager = userManager;
+    private void init() {
+        if (pageManager != null) return;
+        pageManager = (PageManager) ContainerManager.getComponent("pageManager");
+        spaceManager = (SpaceManager) ContainerManager.getComponent("spaceManager");
+        attachmentManager = (AttachmentManager) ContainerManager.getComponent("attachmentManager");
+        permissionManager = (PermissionManager) ContainerManager.getComponent("permissionManager");
     }
 
-    /**
-     * Search pages in a space that the user can view.
-     */
     @GET
     @Path("/pages")
     public Response searchPages(@QueryParam("spaceKey") String spaceKey,
                                 @QueryParam("query") @DefaultValue("") String query,
                                 @QueryParam("limit") @DefaultValue("20") int limit,
                                 @Context HttpServletRequest httpReq) {
-        UserProfile userProfile = userManager.getRemoteUser(httpReq);
-        if (userProfile == null) return unauthorized();
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
+        if (user == null) return unauthorized();
 
         if (spaceKey == null || spaceKey.isEmpty()) {
             return badRequest("spaceKey is required");
         }
-
-        ConfluenceUser user = resolveUser(userProfile);
-        if (user == null) return unauthorized();
 
         Space space = spaceManager.getSpace(spaceKey);
         if (space == null) return notFound("Space not found");
@@ -100,18 +82,14 @@ public class ContextResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Get attachments for a page that the user can view.
-     */
     @GET
     @Path("/attachments")
     public Response getAttachments(@QueryParam("pageId") long pageId,
                                    @QueryParam("limit") @DefaultValue("20") int limit,
                                    @Context HttpServletRequest httpReq) {
-        UserProfile userProfile = userManager.getRemoteUser(httpReq);
-        if (userProfile == null) return unauthorized();
-
-        ConfluenceUser user = resolveUser(userProfile);
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
+        if (user == null) return unauthorized();
 
         Page page = pageManager.getPage(pageId);
         if (page == null) return notFound("Page not found");
@@ -139,17 +117,15 @@ public class ContextResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Get labels in a space.
-     */
     @GET
     @Path("/labels")
     public Response getLabels(@QueryParam("spaceKey") String spaceKey,
                               @QueryParam("query") @DefaultValue("") String query,
                               @QueryParam("limit") @DefaultValue("50") int limit,
                               @Context HttpServletRequest httpReq) {
-        UserProfile userProfile = userManager.getRemoteUser(httpReq);
-        if (userProfile == null) return unauthorized();
+        init();
+        ConfluenceUser user = AuthenticatedUserThreadLocal.get();
+        if (user == null) return unauthorized();
 
         List<Map<String, String>> result = new ArrayList<>();
 
@@ -157,7 +133,6 @@ public class ContextResource {
             Space space = spaceManager.getSpace(spaceKey);
             if (space == null) return notFound("Space not found");
 
-            // Collect unique labels from pages in the space
             Set<String> seenLabels = new HashSet<>();
             List<Page> pages = pageManager.getPages(space, true);
             int count = 0;
@@ -182,11 +157,6 @@ public class ContextResource {
     }
 
     // ─────────────── Helpers ───────────────
-
-    private ConfluenceUser resolveUser(UserProfile userProfile) {
-        if (userProfile == null || userProfile.getUsername() == null) return null;
-        return userAccessor.getUserByName(userProfile.getUsername());
-    }
 
     private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)

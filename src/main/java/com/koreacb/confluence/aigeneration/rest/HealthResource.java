@@ -1,10 +1,10 @@
 package com.koreacb.confluence.aigeneration.rest;
 
+import com.atlassian.sal.api.component.ComponentLocator;
 import com.koreacb.confluence.aigeneration.service.AdminConfigService;
 import com.koreacb.confluence.aigeneration.service.JobQueueService;
 import com.koreacb.confluence.aigeneration.service.VllmClientService;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -15,39 +15,38 @@ import java.util.*;
 
 /**
  * REST resource for health checks and system status.
- * Provides: vLLM connection test, plugin status, queue status.
+ * Uses ComponentLocator for service lookups to avoid Spring context isolation issues.
  */
 @Path("/health")
 @Produces(MediaType.APPLICATION_JSON)
 @Named
 public class HealthResource {
 
-    private final VllmClientService vllmClient;
-    private final AdminConfigService adminConfigService;
-    private final JobQueueService jobQueueService;
+    private VllmClientService vllmClient;
+    private AdminConfigService adminConfigService;
+    private JobQueueService jobQueueService;
 
-    @Inject
-    public HealthResource(VllmClientService vllmClient, AdminConfigService adminConfigService,
-                          JobQueueService jobQueueService) {
-        this.vllmClient = vllmClient;
-        this.adminConfigService = adminConfigService;
-        this.jobQueueService = jobQueueService;
+    private void init() {
+        if (vllmClient != null) return;
+        vllmClient = ComponentLocator.getComponent(VllmClientService.class);
+        adminConfigService = ComponentLocator.getComponent(AdminConfigService.class);
+        jobQueueService = ComponentLocator.getComponent(JobQueueService.class);
     }
 
-    /**
-     * Plugin overall health status.
-     */
     @GET
     public Response getHealth(@Context HttpServletRequest httpReq) {
+        init();
         Map<String, Object> health = new LinkedHashMap<>();
         health.put("status", "UP");
-        health.put("configured", adminConfigService.isConfigured());
+        health.put("configured", adminConfigService != null && adminConfigService.isConfigured());
         health.put("timestamp", System.currentTimeMillis());
 
         Map<String, Object> queue = new LinkedHashMap<>();
         try {
-            queue.put("depth", jobQueueService.getQueueDepth());
-            queue.put("active", jobQueueService.getActiveJobCount());
+            if (jobQueueService != null) {
+                queue.put("depth", jobQueueService.getQueueDepth());
+                queue.put("active", jobQueueService.getActiveJobCount());
+            }
         } catch (Exception e) {
             queue.put("error", e.getMessage());
         }
@@ -56,15 +55,13 @@ public class HealthResource {
         return Response.ok(health).build();
     }
 
-    /**
-     * Test vLLM connection.
-     */
     @GET
     @Path("/vllm")
     public Response testVllm(@Context HttpServletRequest httpReq) {
+        init();
         Map<String, Object> result = new LinkedHashMap<>();
 
-        if (!adminConfigService.isConfigured()) {
+        if (adminConfigService == null || !adminConfigService.isConfigured()) {
             result.put("connected", false);
             result.put("error", "vLLM is not configured");
             return Response.ok(result).build();
@@ -90,16 +87,16 @@ public class HealthResource {
         return Response.ok(result).build();
     }
 
-    /**
-     * Queue status for monitoring.
-     */
     @GET
     @Path("/queue")
     public Response getQueueStatus(@Context HttpServletRequest httpReq) {
+        init();
         Map<String, Object> status = new LinkedHashMap<>();
         try {
-            status.put("depth", jobQueueService.getQueueDepth());
-            status.put("active", jobQueueService.getActiveJobCount());
+            if (jobQueueService != null) {
+                status.put("depth", jobQueueService.getQueueDepth());
+                status.put("active", jobQueueService.getActiveJobCount());
+            }
             status.put("timestamp", System.currentTimeMillis());
         } catch (Exception e) {
             status.put("error", e.getMessage());

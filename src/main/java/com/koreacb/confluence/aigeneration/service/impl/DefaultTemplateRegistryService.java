@@ -7,10 +7,12 @@ import com.koreacb.confluence.aigeneration.service.PolicyService;
 import com.koreacb.confluence.aigeneration.service.TemplateRegistryService;
 import com.koreacb.confluence.aigeneration.template.BuiltInTemplates;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
 
+@ExportAsService({TemplateRegistryService.class})
 @Named("templateRegistryService")
 public class DefaultTemplateRegistryService implements TemplateRegistryService {
     private static final Gson GSON = new Gson();

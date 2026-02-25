@@ -6,12 +6,14 @@ import com.koreacb.confluence.aigeneration.service.PostProcessorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ExportAsService({PostProcessorService.class})
 @Named("postProcessorService")
 public class DefaultPostProcessorService implements PostProcessorService {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultPostProcessorService.class);
