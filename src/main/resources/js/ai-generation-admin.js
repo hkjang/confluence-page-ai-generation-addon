@@ -1,304 +1,263 @@
 /**
- * AI Generation Admin - Admin configuration, glossary, forbidden words, policies, audit
- * Handles all admin REST interactions and UI updates
+ * AI Generation Admin - Config page JS
+ * Handles: config load/save, API key, connection test, glossary, forbidden words
+ *
+ * NOTE: This JS is loaded via <script> tag (not via webResourceManager)
+ * because the admin servlet does simple string replacement, not Velocity processing.
+ * All UI is built with inline HTML - no Soy template dependencies.
  */
 (function($) {
     'use strict';
 
-    var AJS = window.AJS || {};
-    var REST_BASE = AJS.contextPath() + '/rest/ai-generation/1.0';
-
-    AJS.toInit(function() {
-        // Only initialize on admin pages
-        if (!$('#ai-gen-admin-container').length) return;
-
-        initTabs();
-        loadConfig();
-        loadGlossary();
-        loadForbiddenWords();
-        loadPolicies();
-        loadAuditLog();
-        loadUsage();
-        bindEvents();
-    });
-
-    // ─────────────── Tabs ───────────────
-
-    function initTabs() {
-        $('.ai-gen-admin-tab').on('click', function(e) {
-            e.preventDefault();
-            var tab = $(this).data('tab');
-            $('.ai-gen-admin-tab').removeClass('active');
-            $(this).addClass('active');
-            $('.ai-gen-admin-panel').hide();
-            $('#ai-gen-panel-' + tab).show();
-        });
-    }
-
-    // ─────────────── Config ───────────────
-
-    function loadConfig() {
-        $.ajax({
-            url: REST_BASE + '/admin/config',
-            dataType: 'json',
-            success: function(config) {
-                $('#ai-gen-vllm-endpoint').val(config.vllmEndpoint || '');
-                $('#ai-gen-model').val(config.model || '');
-                $('#ai-gen-max-tokens').val(config.maxTokensPerRequest || 4096);
-                $('#ai-gen-temperature').val(config.defaultTemperature || 0.7);
-                $('#ai-gen-timeout').val(config.timeoutSeconds || 60);
-                $('#ai-gen-max-concurrent').val(config.maxConcurrentRequests || 5);
-                $('#ai-gen-storage-policy').val(config.storagePolicy || 'NO_STORE');
-                $('#ai-gen-retention-days').val(config.auditRetentionDays || 30);
-                $('#ai-gen-max-user-day').val(config.maxRequestsPerUserPerDay || 50);
-                $('#ai-gen-max-space-day').val(config.maxRequestsPerSpacePerDay || 200);
-                $('#ai-gen-api-key-status').text(config.apiKeySet ? AJS.I18n.getText('ai.generation.admin.apikey.set') : AJS.I18n.getText('ai.generation.admin.apikey.notset'));
-            },
-            error: function() {
-                showAdminError(AJS.I18n.getText('ai.generation.admin.config.load.error'));
-            }
-        });
-    }
-
-    function saveConfig() {
-        var config = {
-            vllmEndpoint: $('#ai-gen-vllm-endpoint').val(),
-            model: $('#ai-gen-model').val(),
-            maxTokensPerRequest: parseInt($('#ai-gen-max-tokens').val()) || 4096,
-            defaultTemperature: parseFloat($('#ai-gen-temperature').val()) || 0.7,
-            timeoutSeconds: parseInt($('#ai-gen-timeout').val()) || 60,
-            maxConcurrentRequests: parseInt($('#ai-gen-max-concurrent').val()) || 5,
-            storagePolicy: $('#ai-gen-storage-policy').val(),
-            auditRetentionDays: parseInt($('#ai-gen-retention-days').val()) || 30,
-            maxRequestsPerUserPerDay: parseInt($('#ai-gen-max-user-day').val()) || 50,
-            maxRequestsPerSpacePerDay: parseInt($('#ai-gen-max-space-day').val()) || 200
-        };
-
-        $.ajax({
-            url: REST_BASE + '/admin/config',
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify(config),
-            dataType: 'json',
-            success: function() {
-                AJS.flag({type: 'success', title: AJS.I18n.getText('ai.generation.admin.config.saved'), close: 'auto'});
-            },
-            error: function() {
-                AJS.flag({type: 'error', title: AJS.I18n.getText('ai.generation.admin.config.save.error'), close: 'auto'});
-            }
-        });
-    }
-
-    function saveApiKey() {
-        var apiKey = $('#ai-gen-api-key').val();
-        if (!apiKey) {
-            AJS.flag({type: 'warning', title: AJS.I18n.getText('ai.generation.admin.apikey.required'), close: 'auto'});
+    if (typeof AJS === 'undefined' || typeof AJS.$ === 'undefined') {
+        // AJS not loaded yet, retry
+        if (typeof jQuery !== 'undefined') {
+            $ = jQuery;
+        } else {
+            console.error('[AI-Gen Admin] AJS/jQuery not available');
             return;
         }
-
-        $.ajax({
-            url: REST_BASE + '/admin/config/apikey',
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({apiKey: apiKey}),
-            dataType: 'json',
-            success: function() {
-                $('#ai-gen-api-key').val('');
-                $('#ai-gen-api-key-status').text(AJS.I18n.getText('ai.generation.admin.apikey.set'));
-                AJS.flag({type: 'success', title: AJS.I18n.getText('ai.generation.admin.apikey.saved'), close: 'auto'});
-            },
-            error: function() {
-                AJS.flag({type: 'error', title: AJS.I18n.getText('ai.generation.admin.apikey.save.error'), close: 'auto'});
-            }
-        });
+    } else {
+        $ = AJS.$;
     }
 
-    function testConnection() {
-        $('#ai-gen-test-result').html(AiGeneration.Components.spinner());
+    // Wait for DOM ready
+    $(function() {
+        // Only initialize on config page
+        if (!$('#ai-gen-config-form').length) return;
 
-        $.ajax({
-            url: REST_BASE + '/health/vllm',
-            dataType: 'json',
-            success: function(result) {
-                $('#ai-gen-test-result').html(
-                    AiGeneration.Admin.connectionResult({
-                        connected: result.connected,
-                        endpoint: result.endpoint || '',
-                        model: result.model || '',
-                        error: result.error
-                    })
-                );
-            },
-            error: function() {
-                $('#ai-gen-test-result').html(
-                    AiGeneration.Admin.connectionResult({
-                        connected: false,
-                        endpoint: '',
-                        model: '',
-                        error: AJS.I18n.getText('ai.generation.admin.test.error')
-                    })
-                );
-            }
-        });
-    }
+        var REST_BASE = (typeof AJS !== 'undefined' && AJS.contextPath ? AJS.contextPath() : '') + '/rest/ai-generation/1.0';
 
-    // ─────────────── Glossary ───────────────
+        // ─────────────── Config ───────────────
 
-    function loadGlossary() {
-        $.ajax({
-            url: REST_BASE + '/admin/glossary',
-            dataType: 'json',
-            success: function(terms) {
-                var $tbody = $('#ai-gen-glossary-table tbody').empty();
-                $.each(terms, function(i, term) {
-                    $tbody.append(AiGeneration.Admin.glossaryRow(term));
-                });
-            }
-        });
-    }
-
-    function addGlossaryTerm() {
-        var term = $('#ai-gen-new-term').val();
-        var definition = $('#ai-gen-new-definition').val();
-        var spaceKey = $('#ai-gen-new-term-space').val() || null;
-
-        if (!term || !definition) {
-            AJS.flag({type: 'warning', title: AJS.I18n.getText('ai.generation.admin.glossary.required'), close: 'auto'});
-            return;
+        function loadConfig() {
+            $.ajax({
+                url: REST_BASE + '/admin/config',
+                dataType: 'json',
+                success: function(config) {
+                    $('#ai-gen-vllm-endpoint').val(config.vllmEndpoint || '');
+                    $('#ai-gen-model').val(config.model || '');
+                    $('#ai-gen-max-tokens').val(config.maxTokensPerRequest || 4096);
+                    $('#ai-gen-temperature').val(config.defaultTemperature || 0.7);
+                    $('#ai-gen-timeout').val(config.timeoutSeconds || 60);
+                    $('#ai-gen-max-concurrent').val(config.maxConcurrentRequests || 5);
+                    $('#ai-gen-storage-policy').val(config.storagePolicy || 'NO_STORE');
+                    $('#ai-gen-retention-days').val(config.auditRetentionDays || 30);
+                    $('#ai-gen-max-user-day').val(config.maxRequestsPerUserPerDay || 50);
+                    $('#ai-gen-max-space-day').val(config.maxRequestsPerSpacePerDay || 200);
+                    var keyStatus = config.apiKeySet ? '설정됨' : '미설정';
+                    $('#ai-gen-api-key-status').text(keyStatus)
+                        .toggleClass('aui-lozenge-success', !!config.apiKeySet)
+                        .toggleClass('aui-lozenge-error', !config.apiKeySet);
+                },
+                error: function() {
+                    showFlag('error', '설정을 불러올 수 없습니다.');
+                }
+            });
         }
 
-        $.ajax({
-            url: REST_BASE + '/admin/glossary',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({term: term, definition: definition, spaceKey: spaceKey}),
-            dataType: 'json',
-            success: function() {
-                $('#ai-gen-new-term, #ai-gen-new-definition, #ai-gen-new-term-space').val('');
-                loadGlossary();
-                AJS.flag({type: 'success', title: AJS.I18n.getText('ai.generation.admin.glossary.added'), close: 'auto'});
-            }
-        });
-    }
+        function saveConfig() {
+            var config = {
+                vllmEndpoint: $('#ai-gen-vllm-endpoint').val(),
+                model: $('#ai-gen-model').val(),
+                maxTokensPerRequest: parseInt($('#ai-gen-max-tokens').val()) || 4096,
+                defaultTemperature: parseFloat($('#ai-gen-temperature').val()) || 0.7,
+                timeoutSeconds: parseInt($('#ai-gen-timeout').val()) || 60,
+                maxConcurrentRequests: parseInt($('#ai-gen-max-concurrent').val()) || 5,
+                storagePolicy: $('#ai-gen-storage-policy').val(),
+                auditRetentionDays: parseInt($('#ai-gen-retention-days').val()) || 30,
+                maxRequestsPerUserPerDay: parseInt($('#ai-gen-max-user-day').val()) || 50,
+                maxRequestsPerSpacePerDay: parseInt($('#ai-gen-max-space-day').val()) || 200
+            };
 
-    // ─────────────── Forbidden Words ───────────────
-
-    function loadForbiddenWords() {
-        $.ajax({
-            url: REST_BASE + '/admin/forbidden-words',
-            dataType: 'json',
-            success: function(words) {
-                var $tbody = $('#ai-gen-forbidden-table tbody').empty();
-                $.each(words, function(i, word) {
-                    $tbody.append(AiGeneration.Admin.forbiddenRow(word));
-                });
-            }
-        });
-    }
-
-    function addForbiddenWord() {
-        var pattern = $('#ai-gen-new-pattern').val();
-        var replacement = $('#ai-gen-new-replacement').val() || null;
-        var isRegex = $('#ai-gen-new-isregex').is(':checked');
-        var spaceKey = $('#ai-gen-new-word-space').val() || null;
-
-        if (!pattern) {
-            AJS.flag({type: 'warning', title: AJS.I18n.getText('ai.generation.admin.forbidden.required'), close: 'auto'});
-            return;
+            $.ajax({
+                url: REST_BASE + '/admin/config',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(config),
+                dataType: 'json',
+                success: function() {
+                    showFlag('success', '설정이 저장되었습니다.');
+                },
+                error: function() {
+                    showFlag('error', '설정 저장에 실패했습니다.');
+                }
+            });
         }
 
-        $.ajax({
-            url: REST_BASE + '/admin/forbidden-words',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({pattern: pattern, replacement: replacement, isRegex: isRegex, spaceKey: spaceKey}),
-            dataType: 'json',
-            success: function() {
-                $('#ai-gen-new-pattern, #ai-gen-new-replacement, #ai-gen-new-word-space').val('');
-                $('#ai-gen-new-isregex').prop('checked', false);
-                loadForbiddenWords();
-                AJS.flag({type: 'success', title: AJS.I18n.getText('ai.generation.admin.forbidden.added'), close: 'auto'});
+        function saveApiKey() {
+            var apiKey = $('#ai-gen-api-key').val();
+            if (!apiKey) {
+                showFlag('warning', 'API 키를 입력해 주세요.');
+                return;
             }
-        });
-    }
 
-    // ─────────────── Policies ───────────────
+            $.ajax({
+                url: REST_BASE + '/admin/config/apikey',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({apiKey: apiKey}),
+                dataType: 'json',
+                success: function() {
+                    $('#ai-gen-api-key').val('');
+                    $('#ai-gen-api-key-status').text('설정됨').removeClass('aui-lozenge-error').addClass('aui-lozenge-success');
+                    showFlag('success', 'API 키가 저장되었습니다.');
+                },
+                error: function() {
+                    showFlag('error', 'API 키 저장에 실패했습니다.');
+                }
+            });
+        }
 
-    function loadPolicies() {
-        $.ajax({
-            url: REST_BASE + '/admin/policies',
-            dataType: 'json',
-            success: function(policies) {
-                var $tbody = $('#ai-gen-policy-table tbody').empty();
-                $.each(policies, function(i, policy) {
-                    $tbody.append(AiGeneration.Admin.policyRow(policy));
-                });
+        function testConnection() {
+            $('#ai-gen-test-result').html('<div style="padding:10px;"><span class="aui-icon aui-icon-wait">로딩...</span> 연결 테스트 중...</div>');
+
+            $.ajax({
+                url: REST_BASE + '/health/vllm',
+                dataType: 'json',
+                timeout: 30000,
+                success: function(result) {
+                    var html;
+                    if (result.connected) {
+                        html = '<div class="ai-gen-connection-result ai-gen-connected">' +
+                            '<span class="aui-icon aui-icon-small aui-iconfont-approve"></span> ' +
+                            '<strong>연결됨</strong>' +
+                            ' — ' + escapeHtml(result.endpoint || '') + ' (' + escapeHtml(result.model || '') + ')' +
+                            '</div>';
+                    } else {
+                        html = '<div class="ai-gen-connection-result ai-gen-disconnected">' +
+                            '<span class="aui-icon aui-icon-small aui-iconfont-error"></span> ' +
+                            '<strong>연결 실패</strong>' +
+                            (result.error ? '<p class="ai-gen-error-detail">' + escapeHtml(result.error) + '</p>' : '') +
+                            '</div>';
+                    }
+                    $('#ai-gen-test-result').html(html);
+                },
+                error: function() {
+                    $('#ai-gen-test-result').html(
+                        '<div class="ai-gen-connection-result ai-gen-disconnected">' +
+                        '<span class="aui-icon aui-icon-small aui-iconfont-error"></span> ' +
+                        '<strong>연결 실패</strong>' +
+                        '<p class="ai-gen-error-detail">연결 테스트에 실패했습니다. 서버 상태를 확인해 주세요.</p>' +
+                        '</div>'
+                    );
+                }
+            });
+        }
+
+        // ─────────────── Glossary ───────────────
+
+        function glossaryRowHtml(term) {
+            return '<tr data-term-id="' + term.id + '">' +
+                '<td>' + escapeHtml(term.term) + '</td>' +
+                '<td>' + escapeHtml(term.definition) + '</td>' +
+                '<td>' + (term.spaceKey ? escapeHtml(term.spaceKey) : '<em>전역</em>') + '</td>' +
+                '<td>' +
+                '<button class="aui-button aui-button-subtle ai-gen-delete-glossary" data-id="' + term.id + '">' +
+                '<span class="aui-icon aui-icon-small aui-iconfont-remove"></span>' +
+                '</button>' +
+                '</td></tr>';
+        }
+
+        function loadGlossary() {
+            $.ajax({
+                url: REST_BASE + '/admin/glossary',
+                dataType: 'json',
+                success: function(terms) {
+                    var $tbody = $('#ai-gen-glossary-table tbody').empty();
+                    $.each(terms, function(i, term) {
+                        $tbody.append(glossaryRowHtml(term));
+                    });
+                }
+            });
+        }
+
+        function addGlossaryTerm() {
+            var term = $('#ai-gen-new-term').val();
+            var definition = $('#ai-gen-new-definition').val();
+            var spaceKey = $('#ai-gen-new-term-space').val() || null;
+
+            if (!term || !definition) {
+                showFlag('warning', '용어와 정의를 모두 입력해 주세요.');
+                return;
             }
-        });
-    }
 
-    // ─────────────── Audit ───────────────
+            $.ajax({
+                url: REST_BASE + '/admin/glossary',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({term: term, definition: definition, spaceKey: spaceKey}),
+                dataType: 'json',
+                success: function() {
+                    $('#ai-gen-new-term, #ai-gen-new-definition, #ai-gen-new-term-space').val('');
+                    loadGlossary();
+                    showFlag('success', '용어가 추가되었습니다.');
+                },
+                error: function() {
+                    showFlag('error', '용어 추가에 실패했습니다.');
+                }
+            });
+        }
 
-    var auditOffset = 0;
-    var auditLimit = 50;
+        // ─────────────── Forbidden Words ───────────────
 
-    function loadAuditLog() {
-        var params = {
-            offset: auditOffset,
-            limit: auditLimit,
-            userKey: $('#ai-gen-audit-user').val() || undefined,
-            action: $('#ai-gen-audit-action').val() || undefined,
-            spaceKey: $('#ai-gen-audit-space').val() || undefined
-        };
+        function forbiddenRowHtml(word) {
+            return '<tr data-word-id="' + word.id + '">' +
+                '<td>' + escapeHtml(word.pattern) + '</td>' +
+                '<td>' + (word.replacement ? escapeHtml(word.replacement) : '<em>(삭제)</em>') + '</td>' +
+                '<td>' + (word.isRegex ? '정규식' : '문자열') + '</td>' +
+                '<td>' + (word.spaceKey ? escapeHtml(word.spaceKey) : '<em>전역</em>') + '</td>' +
+                '<td>' +
+                '<button class="aui-button aui-button-subtle ai-gen-delete-forbidden" data-id="' + word.id + '">' +
+                '<span class="aui-icon aui-icon-small aui-iconfont-remove"></span>' +
+                '</button>' +
+                '</td></tr>';
+        }
 
-        $.ajax({
-            url: REST_BASE + '/admin/audit',
-            data: params,
-            dataType: 'json',
-            success: function(result) {
-                var $tbody = $('#ai-gen-audit-table tbody').empty();
-                $.each(result.items, function(i, log) {
-                    $tbody.append(AiGeneration.Admin.auditRow({
-                        userKey: log.userKey,
-                        action: log.action,
-                        spaceKey: log.spaceKey || '-',
-                        details: log.details || '',
-                        timestamp: log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'
-                    }));
-                });
-                $('#ai-gen-audit-total').text(result.total);
-                $('#ai-gen-audit-prev').prop('disabled', auditOffset === 0);
-                $('#ai-gen-audit-next').prop('disabled', auditOffset + auditLimit >= result.total);
+        function loadForbiddenWords() {
+            $.ajax({
+                url: REST_BASE + '/admin/forbidden-words',
+                dataType: 'json',
+                success: function(words) {
+                    var $tbody = $('#ai-gen-forbidden-table tbody').empty();
+                    $.each(words, function(i, word) {
+                        $tbody.append(forbiddenRowHtml(word));
+                    });
+                }
+            });
+        }
+
+        function addForbiddenWord() {
+            var pattern = $('#ai-gen-new-pattern').val();
+            var replacement = $('#ai-gen-new-replacement').val() || null;
+            var isRegex = $('#ai-gen-new-isregex').is(':checked');
+            var spaceKey = $('#ai-gen-new-word-space').val() || null;
+
+            if (!pattern) {
+                showFlag('warning', '패턴을 입력해 주세요.');
+                return;
             }
-        });
-    }
 
-    // ─────────────── Usage ───────────────
+            $.ajax({
+                url: REST_BASE + '/admin/forbidden-words',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({pattern: pattern, replacement: replacement, isRegex: isRegex, spaceKey: spaceKey}),
+                dataType: 'json',
+                success: function() {
+                    $('#ai-gen-new-pattern, #ai-gen-new-replacement, #ai-gen-new-word-space').val('');
+                    $('#ai-gen-new-isregex').prop('checked', false);
+                    loadForbiddenWords();
+                    showFlag('success', '금칙어가 추가되었습니다.');
+                },
+                error: function() {
+                    showFlag('error', '금칙어 추가에 실패했습니다.');
+                }
+            });
+        }
 
-    function loadUsage() {
-        var days = parseInt($('#ai-gen-usage-days').val()) || 7;
+        // ─────────────── Events ───────────────
 
-        $.ajax({
-            url: REST_BASE + '/admin/usage',
-            data: {days: days},
-            dataType: 'json',
-            success: function(summary) {
-                $('#ai-gen-usage-container').html(
-                    AiGeneration.Admin.usageSummary({
-                        totalRequests: summary.totalRequests || 0,
-                        totalTokens: summary.totalTokens || 0,
-                        activeUsers: summary.activeUsers || 0,
-                        activeSpaces: summary.activeSpaces || 0,
-                        period: days + ' ' + AJS.I18n.getText('ai.generation.admin.usage.days')
-                    })
-                );
-            }
-        });
-    }
-
-    // ─────────────── Events ───────────────
-
-    function bindEvents() {
         // Config
         $(document).on('click', '#ai-gen-save-config', saveConfig);
         $(document).on('click', '#ai-gen-save-apikey', saveApiKey);
@@ -308,33 +267,45 @@
         $(document).on('click', '#ai-gen-add-glossary', addGlossaryTerm);
         $(document).on('click', '.ai-gen-delete-glossary', function() {
             var id = $(this).data('id');
-            $.ajax({url: REST_BASE + '/admin/glossary/' + id, type: 'DELETE', success: loadGlossary});
+            if (confirm('용어를 삭제하시겠습니까?')) {
+                $.ajax({url: REST_BASE + '/admin/glossary/' + id, type: 'DELETE', success: loadGlossary});
+            }
         });
 
         // Forbidden words
         $(document).on('click', '#ai-gen-add-forbidden', addForbiddenWord);
         $(document).on('click', '.ai-gen-delete-forbidden', function() {
             var id = $(this).data('id');
-            $.ajax({url: REST_BASE + '/admin/forbidden-words/' + id, type: 'DELETE', success: loadForbiddenWords});
+            if (confirm('금칙어를 삭제하시겠습니까?')) {
+                $.ajax({url: REST_BASE + '/admin/forbidden-words/' + id, type: 'DELETE', success: loadForbiddenWords});
+            }
         });
 
-        // Policies
-        $(document).on('click', '.ai-gen-delete-policy', function() {
-            var spaceKey = $(this).data('space-key');
-            $.ajax({url: REST_BASE + '/admin/policies/' + spaceKey, type: 'DELETE', success: loadPolicies});
-        });
+        // ─────────────── Helpers ───────────────
 
-        // Audit
-        $(document).on('click', '#ai-gen-audit-filter', function() { auditOffset = 0; loadAuditLog(); });
-        $(document).on('click', '#ai-gen-audit-prev', function() { auditOffset = Math.max(0, auditOffset - auditLimit); loadAuditLog(); });
-        $(document).on('click', '#ai-gen-audit-next', function() { auditOffset += auditLimit; loadAuditLog(); });
+        function showFlag(type, title) {
+            if (typeof AJS !== 'undefined' && AJS.flag) {
+                AJS.flag({type: type, title: title, close: 'auto'});
+            } else {
+                alert(title);
+            }
+        }
 
-        // Usage
-        $(document).on('change', '#ai-gen-usage-days', loadUsage);
-    }
+        function escapeHtml(str) {
+            if (!str) return '';
+            if (typeof AJS !== 'undefined' && AJS.escapeHtml) {
+                return AJS.escapeHtml(str);
+            }
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
 
-    function showAdminError(msg) {
-        AJS.flag({type: 'error', title: msg, close: 'auto'});
-    }
+        // ─────────────── Init ───────────────
 
-})(AJS.$);
+        loadConfig();
+        loadGlossary();
+        loadForbiddenWords();
+    });
+
+})(typeof AJS !== 'undefined' && AJS.$ ? AJS.$ : jQuery);

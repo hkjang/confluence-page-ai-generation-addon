@@ -2,29 +2,25 @@
 <head>
     <title>AI 문서 생성 - 스페이스 정책</title>
     <meta name="decorator" content="atl.admin" />
-    $webResourceManager.requireResource("com.koreacb.confluence.ai-page-generation:ai-generation-admin-resources")
+    <link rel="stylesheet" href="$baseUrl/download/resources/$pluginKey:ai-generation-admin-resources/ai-generation-admin.css" type="text/css"/>
 </head>
 <body>
 <div id="ai-gen-admin-container" class="ai-gen-admin">
-    <!-- Navigation Tabs -->
-    <div class="aui-tabs horizontal-tabs">
-        <ul class="tabs-menu">
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a>
-            </li>
-            <li class="menu-item active-tab">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a>
-            </li>
-        </ul>
-    </div>
+    <!-- Navigation -->
+    <nav class="aui-navgroup aui-navgroup-horizontal">
+        <div class="aui-navgroup-inner">
+            <div class="aui-navgroup-primary">
+                <ul class="aui-nav">
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a></li>
+                    <li class="aui-nav-selected"><a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <div id="ai-gen-panel-policies" class="ai-gen-admin-panel">
+    <div class="ai-gen-admin-panel">
         <h2>스페이스별 정책 관리</h2>
         <p class="description">스페이스별로 AI 문서 생성 기능의 사용을 제어합니다.
             정책이 없는 스페이스는 전역 기본 설정을 따릅니다.</p>
@@ -82,55 +78,78 @@
 
 <script>
 AJS.toInit(function() {
+    var $ = AJS.$;
     var REST_BASE = AJS.contextPath() + '/rest/ai-generation/1.0';
 
+    function policyRowHtml(p) {
+        var statusHtml = p.enabled
+            ? '<span class="aui-lozenge aui-lozenge-success">활성</span>'
+            : '<span class="aui-lozenge aui-lozenge-moved">비활성</span>';
+        return '<tr data-space-key="' + AJS.escapeHtml(p.spaceKey) + '">' +
+            '<td>' + AJS.escapeHtml(p.spaceKey) + '</td>' +
+            '<td>' + (p.maxRequestsPerDay || '-') + '</td>' +
+            '<td>' + (p.maxTokensPerRequest || '-') + '</td>' +
+            '<td>' + statusHtml + '</td>' +
+            '<td>' +
+            '<button class="aui-button aui-button-subtle ai-gen-delete-policy" data-space-key="' + AJS.escapeHtml(p.spaceKey) + '">' +
+            '<span class="aui-icon aui-icon-small aui-iconfont-remove"></span>' +
+            '</button>' +
+            '</td></tr>';
+    }
+
     function loadPolicies() {
-        AJS.$.ajax({
+        $.ajax({
             url: REST_BASE + '/admin/policies',
             dataType: 'json',
             success: function(policies) {
-                var tbody = AJS.$('#ai-gen-policy-table tbody').empty();
-                AJS.$.each(policies, function(i, p) {
-                    tbody.append(AiGeneration.Admin.policyRow(p));
+                var tbody = $('#ai-gen-policy-table tbody').empty();
+                $.each(policies, function(i, p) {
+                    tbody.append(policyRowHtml(p));
                 });
+            },
+            error: function() {
+                AJS.flag({type: 'error', title: '정책 목록을 불러올 수 없습니다.', close: 'auto'});
             }
         });
     }
 
-    AJS.$('#ai-gen-add-policy').on('click', function() {
-        var spaceKey = AJS.$('#ai-gen-policy-space').val();
+    $('#ai-gen-add-policy').on('click', function() {
+        var spaceKey = $('#ai-gen-policy-space').val();
         if (!spaceKey) {
             AJS.flag({type: 'warning', title: '스페이스 키를 입력하세요.', close: 'auto'});
             return;
         }
 
-        var groups = AJS.$('#ai-gen-policy-groups').val();
-        var templates = AJS.$('#ai-gen-policy-templates').val();
+        var groups = $('#ai-gen-policy-groups').val();
+        var templates = $('#ai-gen-policy-templates').val();
 
-        AJS.$.ajax({
-            url: REST_BASE + '/admin/policies/' + spaceKey,
+        $.ajax({
+            url: REST_BASE + '/admin/policies/' + encodeURIComponent(spaceKey),
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify({
-                maxRequestsPerDay: parseInt(AJS.$('#ai-gen-policy-max-requests').val()) || 100,
-                maxTokensPerRequest: parseInt(AJS.$('#ai-gen-policy-max-tokens').val()) || 4096,
+                maxRequestsPerDay: parseInt($('#ai-gen-policy-max-requests').val()) || 100,
+                maxTokensPerRequest: parseInt($('#ai-gen-policy-max-tokens').val()) || 4096,
                 allowedGroups: groups ? groups.split(',').map(function(s) { return s.trim(); }) : [],
                 allowedTemplates: templates ? templates.split(',').map(function(s) { return s.trim(); }) : [],
-                enabled: AJS.$('#ai-gen-policy-enabled').is(':checked')
+                enabled: $('#ai-gen-policy-enabled').is(':checked')
             }),
             dataType: 'json',
             success: function() {
-                AJS.$('#ai-gen-policy-space').val('');
+                $('#ai-gen-policy-space').val('');
                 loadPolicies();
                 AJS.flag({type: 'success', title: '정책이 저장되었습니다.', close: 'auto'});
+            },
+            error: function() {
+                AJS.flag({type: 'error', title: '정책 저장에 실패했습니다.', close: 'auto'});
             }
         });
     });
 
-    AJS.$(document).on('click', '.ai-gen-delete-policy', function() {
-        var spaceKey = AJS.$(this).data('space-key');
+    $(document).on('click', '.ai-gen-delete-policy', function() {
+        var spaceKey = $(this).data('space-key');
         if (confirm('정책을 삭제하시겠습니까? (' + spaceKey + ')')) {
-            AJS.$.ajax({url: REST_BASE + '/admin/policies/' + spaceKey, type: 'DELETE', success: loadPolicies});
+            $.ajax({url: REST_BASE + '/admin/policies/' + encodeURIComponent(spaceKey), type: 'DELETE', success: loadPolicies});
         }
     });
 

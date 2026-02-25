@@ -2,29 +2,25 @@
 <head>
     <title>AI 문서 생성 - 감사 로그</title>
     <meta name="decorator" content="atl.admin" />
-    $webResourceManager.requireResource("com.koreacb.confluence.ai-page-generation:ai-generation-admin-resources")
+    <link rel="stylesheet" href="$baseUrl/download/resources/$pluginKey:ai-generation-admin-resources/ai-generation-admin.css" type="text/css"/>
 </head>
 <body>
 <div id="ai-gen-admin-container" class="ai-gen-admin">
-    <!-- Navigation Tabs -->
-    <div class="aui-tabs horizontal-tabs">
-        <ul class="tabs-menu">
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a>
-            </li>
-            <li class="menu-item active-tab">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a>
-            </li>
-        </ul>
-    </div>
+    <!-- Navigation -->
+    <nav class="aui-navgroup aui-navgroup-horizontal">
+        <div class="aui-navgroup-inner">
+            <div class="aui-navgroup-primary">
+                <ul class="aui-nav">
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a></li>
+                    <li class="aui-nav-selected"><a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <div id="ai-gen-panel-audit" class="ai-gen-admin-panel">
+    <div class="ai-gen-admin-panel">
         <!-- Usage Statistics -->
         <h2>사용량 현황</h2>
         <div class="field-group">
@@ -72,7 +68,7 @@
             <button type="button" id="ai-gen-audit-filter" class="aui-button">조회</button>
         </div>
 
-        <table id="ai-gen-audit-table" class="aui aui-table-sortable">
+        <table id="ai-gen-audit-table" class="aui">
             <thead>
                 <tr>
                     <th>시간</th>
@@ -95,63 +91,81 @@
 
 <script>
 AJS.toInit(function() {
+    var $ = AJS.$;
     var REST_BASE = AJS.contextPath() + '/rest/ai-generation/1.0';
     var auditOffset = 0;
     var auditLimit = 50;
 
+    function usageSummaryHtml(s) {
+        return '<div class="ai-gen-usage-summary">' +
+            '<div class="ai-gen-usage-card"><div class="ai-gen-usage-value">' + s.totalRequests + '</div><div class="ai-gen-usage-label">총 요청 수</div></div>' +
+            '<div class="ai-gen-usage-card"><div class="ai-gen-usage-value">' + s.totalTokens + '</div><div class="ai-gen-usage-label">총 토큰 수</div></div>' +
+            '<div class="ai-gen-usage-card"><div class="ai-gen-usage-value">' + s.activeUsers + '</div><div class="ai-gen-usage-label">활성 사용자</div></div>' +
+            '<div class="ai-gen-usage-card"><div class="ai-gen-usage-value">' + s.activeSpaces + '</div><div class="ai-gen-usage-label">활성 스페이스</div></div>' +
+            '</div>';
+    }
+
+    function auditRowHtml(log) {
+        var ts = log.timestamp ? new Date(log.timestamp).toLocaleString('ko-KR') : '-';
+        return '<tr>' +
+            '<td>' + AJS.escapeHtml(ts) + '</td>' +
+            '<td>' + AJS.escapeHtml(log.userKey || '-') + '</td>' +
+            '<td><span class="aui-lozenge">' + AJS.escapeHtml(log.action) + '</span></td>' +
+            '<td>' + AJS.escapeHtml(log.spaceKey || '-') + '</td>' +
+            '<td class="ai-gen-audit-details">' + AJS.escapeHtml(log.details || '') + '</td>' +
+            '</tr>';
+    }
+
     function loadUsage() {
-        var days = parseInt(AJS.$('#ai-gen-usage-days').val()) || 7;
-        AJS.$.ajax({
+        var days = parseInt($('#ai-gen-usage-days').val()) || 7;
+        $.ajax({
             url: REST_BASE + '/admin/usage',
             data: {days: days},
             dataType: 'json',
             success: function(summary) {
-                AJS.$('#ai-gen-usage-container').html(
-                    AiGeneration.Admin.usageSummary({
-                        totalRequests: summary.totalRequests || 0,
-                        totalTokens: summary.totalTokens || 0,
-                        activeUsers: summary.activeUsers || 0,
-                        activeSpaces: summary.activeSpaces || 0,
-                        period: days + '일'
-                    })
-                );
+                $('#ai-gen-usage-container').html(usageSummaryHtml({
+                    totalRequests: summary.totalRequests || 0,
+                    totalTokens: summary.totalTokens || 0,
+                    activeUsers: summary.activeUsers || 0,
+                    activeSpaces: summary.activeSpaces || 0
+                }));
+            },
+            error: function() {
+                $('#ai-gen-usage-container').html('<p class="description">사용량 데이터를 불러올 수 없습니다.</p>');
             }
         });
     }
 
     function loadAuditLog() {
-        AJS.$.ajax({
+        $.ajax({
             url: REST_BASE + '/admin/audit',
             data: {
                 offset: auditOffset,
                 limit: auditLimit,
-                userKey: AJS.$('#ai-gen-audit-user').val() || undefined,
-                action: AJS.$('#ai-gen-audit-action').val() || undefined,
-                spaceKey: AJS.$('#ai-gen-audit-space').val() || undefined
+                userKey: $('#ai-gen-audit-user').val() || undefined,
+                action: $('#ai-gen-audit-action').val() || undefined,
+                spaceKey: $('#ai-gen-audit-space').val() || undefined
             },
             dataType: 'json',
             success: function(result) {
-                var tbody = AJS.$('#ai-gen-audit-table tbody').empty();
-                AJS.$.each(result.items, function(i, log) {
-                    tbody.append(AiGeneration.Admin.auditRow({
-                        userKey: log.userKey || '-',
-                        action: log.action,
-                        spaceKey: log.spaceKey || '-',
-                        details: log.details || '',
-                        timestamp: log.timestamp ? new Date(log.timestamp).toLocaleString('ko-KR') : '-'
-                    }));
+                var tbody = $('#ai-gen-audit-table tbody').empty();
+                $.each(result.items, function(i, log) {
+                    tbody.append(auditRowHtml(log));
                 });
-                AJS.$('#ai-gen-audit-total').text(result.total);
-                AJS.$('#ai-gen-audit-prev').prop('disabled', auditOffset === 0);
-                AJS.$('#ai-gen-audit-next').prop('disabled', auditOffset + auditLimit >= result.total);
+                $('#ai-gen-audit-total').text(result.total);
+                $('#ai-gen-audit-prev').prop('disabled', auditOffset === 0);
+                $('#ai-gen-audit-next').prop('disabled', auditOffset + auditLimit >= result.total);
+            },
+            error: function() {
+                AJS.flag({type: 'error', title: '감사 로그를 불러올 수 없습니다.', close: 'auto'});
             }
         });
     }
 
-    AJS.$('#ai-gen-audit-filter').on('click', function() { auditOffset = 0; loadAuditLog(); });
-    AJS.$('#ai-gen-audit-prev').on('click', function() { auditOffset = Math.max(0, auditOffset - auditLimit); loadAuditLog(); });
-    AJS.$('#ai-gen-audit-next').on('click', function() { auditOffset += auditLimit; loadAuditLog(); });
-    AJS.$('#ai-gen-usage-days').on('change', loadUsage);
+    $('#ai-gen-audit-filter').on('click', function() { auditOffset = 0; loadAuditLog(); });
+    $('#ai-gen-audit-prev').on('click', function() { auditOffset = Math.max(0, auditOffset - auditLimit); loadAuditLog(); });
+    $('#ai-gen-audit-next').on('click', function() { auditOffset += auditLimit; loadAuditLog(); });
+    $('#ai-gen-usage-days').on('change', loadUsage);
 
     loadUsage();
     loadAuditLog();

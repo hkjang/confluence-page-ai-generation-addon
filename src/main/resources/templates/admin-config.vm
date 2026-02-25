@@ -2,38 +2,26 @@
 <head>
     <title>AI 문서 생성 - 설정</title>
     <meta name="decorator" content="atl.admin" />
-    $webResourceManager.requireResource("com.koreacb.confluence.ai-page-generation:ai-generation-admin-resources")
+    <link rel="stylesheet" href="$baseUrl/download/resources/$pluginKey:ai-generation-admin-resources/ai-generation-admin.css" type="text/css"/>
 </head>
 <body>
 <div id="ai-gen-admin-container" class="ai-gen-admin">
-    <!-- Navigation Tabs -->
-    <div class="aui-tabs horizontal-tabs">
-        <ul class="tabs-menu">
-            <li class="menu-item active-tab">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/config" class="ai-gen-admin-tab active" data-tab="config">
-                    설정
-                </a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts" class="ai-gen-admin-tab" data-tab="prompts">
-                    프롬프트
-                </a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/policies" class="ai-gen-admin-tab" data-tab="policies">
-                    정책
-                </a>
-            </li>
-            <li class="menu-item">
-                <a href="$baseUrl/plugins/servlet/ai-generation/admin/audit" class="ai-gen-admin-tab" data-tab="audit">
-                    감사 로그
-                </a>
-            </li>
-        </ul>
-    </div>
+    <!-- Navigation -->
+    <nav class="aui-navgroup aui-navgroup-horizontal">
+        <div class="aui-navgroup-inner">
+            <div class="aui-navgroup-primary">
+                <ul class="aui-nav">
+                    <li class="aui-nav-selected"><a href="$baseUrl/plugins/servlet/ai-generation/admin/config">설정</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/prompts">프롬프트</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/policies">정책</a></li>
+                    <li><a href="$baseUrl/plugins/servlet/ai-generation/admin/audit">감사 로그</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
     <!-- Config Panel -->
-    <div id="ai-gen-panel-config" class="ai-gen-admin-panel">
+    <div class="ai-gen-admin-panel">
         <h2>vLLM 연결 설정</h2>
         <form class="aui" id="ai-gen-config-form">
             <fieldset>
@@ -151,5 +139,7 @@
         </div>
     </div>
 </div>
+
+<script src="$baseUrl/download/resources/$pluginKey:ai-generation-admin-resources/ai-generation-admin.js"></script>
 </body>
 </html>
