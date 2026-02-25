@@ -4,6 +4,7 @@ import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.google.gson.Gson;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.koreacb.confluence.aigeneration.ao.*;
 import com.koreacb.confluence.aigeneration.model.AdminConfig;
 import com.koreacb.confluence.aigeneration.service.*;
@@ -39,7 +40,7 @@ public class AdminResource {
     @Inject
     public AdminResource(AdminConfigService adminConfigService, PolicyService policyService,
                          AuditService auditService, UsageTrackingService usageTracking,
-                         UserManager userManager, ActiveObjects ao) {
+                         @ComponentImport UserManager userManager, @ComponentImport ActiveObjects ao) {
         this.adminConfigService = adminConfigService;
         this.policyService = policyService;
         this.auditService = auditService;

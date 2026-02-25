@@ -19,6 +19,7 @@ import com.koreacb.confluence.aigeneration.util.ContentTruncator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
@@ -37,9 +38,12 @@ public class DefaultContextBuilderService implements ContextBuilderService {
     private final ContentTruncator contentTruncator;
 
     @Inject
-    public DefaultContextBuilderService(PageManager pageManager, AttachmentManager attachmentManager,
-                                        SpaceManager spaceManager, LabelManager labelManager,
-                                        PermissionManager permissionManager, UserAccessor userAccessor,
+    public DefaultContextBuilderService(@ComponentImport PageManager pageManager,
+                                        @ComponentImport AttachmentManager attachmentManager,
+                                        @ComponentImport SpaceManager spaceManager,
+                                        @ComponentImport LabelManager labelManager,
+                                        @ComponentImport PermissionManager permissionManager,
+                                        @ComponentImport UserAccessor userAccessor,
                                         ContentTruncator contentTruncator) {
         this.pageManager = pageManager;
         this.attachmentManager = attachmentManager;

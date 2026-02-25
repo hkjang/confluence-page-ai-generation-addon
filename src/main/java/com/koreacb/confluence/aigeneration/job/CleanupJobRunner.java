@@ -13,6 +13,7 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Calendar;
@@ -33,7 +34,7 @@ public class CleanupJobRunner implements JobRunner {
     private final AuditService auditService;
 
     @Inject
-    public CleanupJobRunner(ActiveObjects ao, AdminConfigService adminConfigService,
+    public CleanupJobRunner(@ComponentImport ActiveObjects ao, AdminConfigService adminConfigService,
                             AuditService auditService) {
         this.ao = ao;
         this.adminConfigService = adminConfigService;

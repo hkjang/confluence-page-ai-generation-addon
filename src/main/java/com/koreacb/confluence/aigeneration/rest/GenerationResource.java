@@ -1,5 +1,6 @@
 package com.koreacb.confluence.aigeneration.rest;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.koreacb.confluence.aigeneration.model.*;
@@ -28,7 +29,7 @@ public class GenerationResource {
     private final UserManager userManager;
 
     @Inject
-    public GenerationResource(AiGenerationService generationService, UserManager userManager) {
+    public GenerationResource(AiGenerationService generationService, @ComponentImport UserManager userManager) {
         this.generationService = generationService;
         this.userManager = userManager;
     }

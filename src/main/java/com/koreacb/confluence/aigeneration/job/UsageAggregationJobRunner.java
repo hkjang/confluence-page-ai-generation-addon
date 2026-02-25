@@ -1,6 +1,7 @@
 package com.koreacb.confluence.aigeneration.job;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.scheduler.JobRunner;
 import com.atlassian.scheduler.JobRunnerRequest;
 import com.atlassian.scheduler.JobRunnerResponse;
@@ -27,7 +28,7 @@ public class UsageAggregationJobRunner implements JobRunner {
     private final ActiveObjects ao;
 
     @Inject
-    public UsageAggregationJobRunner(ActiveObjects ao) {
+    public UsageAggregationJobRunner(@ComponentImport ActiveObjects ao) {
         this.ao = ao;
     }
 

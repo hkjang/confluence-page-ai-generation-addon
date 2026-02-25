@@ -6,6 +6,7 @@ import com.atlassian.sal.api.user.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
@@ -35,8 +36,8 @@ public class AdminConfigServlet extends HttpServlet {
     private final LoginUriProvider loginUriProvider;
 
     @Inject
-    public AdminConfigServlet(UserManager userManager,
-                              LoginUriProvider loginUriProvider) {
+    public AdminConfigServlet(@ComponentImport UserManager userManager,
+                              @ComponentImport LoginUriProvider loginUriProvider) {
         this.userManager = userManager;
         this.loginUriProvider = loginUriProvider;
     }

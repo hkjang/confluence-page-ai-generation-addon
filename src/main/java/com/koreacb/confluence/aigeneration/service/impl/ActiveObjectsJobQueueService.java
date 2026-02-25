@@ -8,6 +8,7 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Calendar;
@@ -19,7 +20,7 @@ public class ActiveObjectsJobQueueService implements JobQueueService {
     private final ActiveObjects ao;
 
     @Inject
-    public ActiveObjectsJobQueueService(ActiveObjects ao) { this.ao = ao; }
+    public ActiveObjectsJobQueueService(@ComponentImport ActiveObjects ao) { this.ao = ao; }
 
     @Override
     public AoGenerationJob getJob(String jobUuid) {

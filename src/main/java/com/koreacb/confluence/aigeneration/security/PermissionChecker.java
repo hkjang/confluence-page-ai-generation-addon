@@ -11,6 +11,7 @@ import com.atlassian.confluence.user.UserAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -24,8 +25,10 @@ public class PermissionChecker {
     private final UserAccessor userAccessor;
 
     @Inject
-    public PermissionChecker(PermissionManager permissionManager, PageManager pageManager,
-                             SpaceManager spaceManager, UserAccessor userAccessor) {
+    public PermissionChecker(@ComponentImport PermissionManager permissionManager,
+                             @ComponentImport PageManager pageManager,
+                             @ComponentImport SpaceManager spaceManager,
+                             @ComponentImport UserAccessor userAccessor) {
         this.permissionManager = permissionManager;
         this.pageManager = pageManager;
         this.spaceManager = spaceManager;

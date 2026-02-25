@@ -13,6 +13,7 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +29,7 @@ public class DefaultPromptBuilderService implements PromptBuilderService {
     private final TemplateRegistryService templateRegistryService;
 
     @Inject
-    public DefaultPromptBuilderService(ActiveObjects ao, TemplateRegistryService templateRegistryService) {
+    public DefaultPromptBuilderService(@ComponentImport ActiveObjects ao, TemplateRegistryService templateRegistryService) {
         this.ao = ao;
         this.templateRegistryService = templateRegistryService;
     }

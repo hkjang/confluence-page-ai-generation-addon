@@ -34,8 +34,8 @@
     </ao>
 
     <!-- ====================================================== -->
-    <!-- All components are discovered via Spring Scanner @Named -->
-    <!-- No component or component-import elements needed        -->
+    <!-- Host imports via @ComponentImport on constructor params -->
+    <!-- Plugin beans via Spring Scanner @Named                  -->
     <!-- ====================================================== -->
 
     <!-- ======================== -->

@@ -7,6 +7,7 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
@@ -17,7 +18,7 @@ public class ActiveObjectsUsageTrackingService implements UsageTrackingService {
     private final ActiveObjects ao;
 
     @Inject
-    public ActiveObjectsUsageTrackingService(ActiveObjects ao) { this.ao = ao; }
+    public ActiveObjectsUsageTrackingService(@ComponentImport ActiveObjects ao) { this.ao = ao; }
 
     @Override
     public synchronized void recordUsage(String userKey, String spaceKey, int tokenCount) {

@@ -14,6 +14,7 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
@@ -30,7 +31,7 @@ public class DefaultAiGenerationService implements AiGenerationService {
     private final Gson gson = new Gson();
 
     @Inject
-    public DefaultAiGenerationService(ActiveObjects ao, PermissionChecker permChecker,
+    public DefaultAiGenerationService(@ComponentImport ActiveObjects ao, PermissionChecker permChecker,
                                       PolicyService policyService, RateLimiter rateLimiter,
                                       TemplateRegistryService templateService, AuditService auditService) {
         this.ao = ao; this.permChecker = permChecker; this.policyService = policyService;

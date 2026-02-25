@@ -1,5 +1,6 @@
 package com.koreacb.confluence.aigeneration.rest;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.koreacb.confluence.aigeneration.model.DocumentTemplate;
@@ -27,7 +28,7 @@ public class TemplateResource {
     private final UserManager userManager;
 
     @Inject
-    public TemplateResource(TemplateRegistryService templateService, UserManager userManager) {
+    public TemplateResource(TemplateRegistryService templateService, @ComponentImport UserManager userManager) {
         this.templateService = templateService;
         this.userManager = userManager;
     }

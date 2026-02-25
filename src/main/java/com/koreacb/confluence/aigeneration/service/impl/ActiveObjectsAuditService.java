@@ -8,6 +8,7 @@ import net.java.ao.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.*;
@@ -18,7 +19,7 @@ public class ActiveObjectsAuditService implements AuditService {
     private final ActiveObjects ao;
 
     @Inject
-    public ActiveObjectsAuditService(ActiveObjects ao) { this.ao = ao; }
+    public ActiveObjectsAuditService(@ComponentImport ActiveObjects ao) { this.ao = ao; }
 
     @Override
     public void logAction(String userKey, String action, String spaceKey, long pageId, String details) {

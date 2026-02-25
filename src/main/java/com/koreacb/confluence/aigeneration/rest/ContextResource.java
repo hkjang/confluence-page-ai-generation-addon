@@ -12,6 +12,7 @@ import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 
@@ -42,10 +43,10 @@ public class ContextResource {
     private final UserManager userManager;
 
     @Inject
-    public ContextResource(PageManager pageManager, SpaceManager spaceManager,
-                           AttachmentManager attachmentManager, LabelManager labelManager,
-                           PermissionManager permissionManager, UserAccessor userAccessor,
-                           UserManager userManager) {
+    public ContextResource(@ComponentImport PageManager pageManager, @ComponentImport SpaceManager spaceManager,
+                           @ComponentImport AttachmentManager attachmentManager, @ComponentImport LabelManager labelManager,
+                           @ComponentImport PermissionManager permissionManager, @ComponentImport UserAccessor userAccessor,
+                           @ComponentImport UserManager userManager) {
         this.pageManager = pageManager;
         this.spaceManager = spaceManager;
         this.attachmentManager = attachmentManager;

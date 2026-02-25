@@ -8,6 +8,7 @@ import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
 import com.koreacb.confluence.aigeneration.model.GenerationResult;
@@ -47,9 +48,9 @@ public class PreviewResource {
     private final AuditService auditService;
 
     @Inject
-    public PreviewResource(AiGenerationService generationService, PageManager pageManager,
-                           SpaceManager spaceManager, PermissionManager permissionManager,
-                           UserAccessor userAccessor, UserManager userManager,
+    public PreviewResource(AiGenerationService generationService, @ComponentImport PageManager pageManager,
+                           @ComponentImport SpaceManager spaceManager, @ComponentImport PermissionManager permissionManager,
+                           @ComponentImport UserAccessor userAccessor, @ComponentImport UserManager userManager,
                            ContentSanitizer sanitizer, PostProcessorService postProcessor,
                            AuditService auditService) {
         this.generationService = generationService;
